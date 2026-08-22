@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HotelHub Search</title>
+<style>
+  body { margin:0; font-family:Arial,sans-serif; background:#f4f4f4; color:#000; font-size:16px; transition: background 0.4s,color 0.4s; }
+  body.dark-mode { background:#111; color:#fff; }
+  header { background:#1e1e2f; color:#fff; padding:1rem 2rem; display:flex; justify-content:space-between; align-items:center; }
+  nav a { color:#fff; margin-left:15px; text-decoration:none; font-size:1.1rem; }
+  .controls { position:absolute; left:10px; top:10px; display:flex; gap:10px; align-items:center; z-index:1000; }
+  .icon-btn { cursor:pointer; font-size:22px; user-select:none; color:#000; background:none; border:none; }
+  body.dark-mode .icon-btn { color:#fff; }
+  .font-btn { cursor:pointer; padding:3px 8px; border-radius:5px; border:1px solid #ccc; background:#fff; color:#000; font-size:16px; }
+  body.dark-mode .icon-btn, body.dark-mode .font-btn { color:#fff; background:#333; border:1px solid #555; }
+
+  .search-section { max-width:1200px; margin:40px auto; padding:0 20px; }
+  .search-section h2 { text-align:center; color:#ff6600; margin-bottom:25px; }
+  .search-bar { display:flex; gap:10px; margin-bottom:20px; flex-wrap:wrap; }
+  .search-bar input, .search-bar select, .search-bar button { padding:12px 15px; border-radius:8px; border:1px solid #ccc; font-size:16px; outline:none; flex:1; transition:all 0.3s; }
+  .search-bar button { background:#ff6600; color:#fff; border:none; cursor:pointer; }
+  .search-bar button:hover { background:#e65c00; }
+  body.dark-mode .search-bar input, body.dark-mode .search-bar select { background:#222; border:1px solid #555; color:#fff; }
+
+  .hotel-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(250px,1fr)); gap:20px; margin-top:20px; }
+  .hotel-card { background:#fff; border-radius:12px; box-shadow:0 6px 15px rgba(0,0,0,0.1); overflow:hidden; transition: transform 0.3s, background 0.4s, color 0.4s; }
+  .hotel-card:hover { transform:translateY(-5px); }
+  body.dark-mode .hotel-card { background:#222; border:1px solid #444; }
+  .hotel-card img { width:100%; height:180px; object-fit:cover; }
+  .hotel-card h3, .hotel-card p { padding:10px; margin:0; }
+  .hotel-card .btn { display:block; width:calc(100%-20px); margin:10px; padding:12px; background:#ff6600; color:#fff; text-align:center; border-radius:8px; text-decoration:none; cursor:pointer; transition:background 0.3s; }
+  .hotel-card .btn:hover { background:#e65c00; }
+  .no-results { text-align:center; color:#888; margin-top:20px; font-size:18px; }
+  .pagination { display:flex; justify-content:center; margin:30px 0; gap:10px; flex-wrap:wrap; }
+  .pagination button { padding:10px 15px; border:none; border-radius:5px; cursor:pointer; background:#ff6600; color:#fff; transition: background 0.3s; }
+  .pagination button:hover { background:#e65c00; }
+  .pagination button.active { background:#1e1e2f; color:#fff; }
+</style>
+</head>
+<body>
+
+<div class="controls">
+  <span id="themeToggle" class="icon-btn">🌙</span>
+  <button id="decreaseBtn" class="font-btn">A-</button>
+  <button id="increaseBtn" class="font-btn">A+</button>
+</div>
+
+<header>
+  <h2>HotelHub</h2>
+  <nav>
+    <a href="index.html">Home</a>
+    <a href="about.html">About</a>
+    <a href="login.html">Login</a>
+    <a href="search.html">Search</a>
+    <a href="admin.html">Admin</a>
+  </nav>
+</header>
+
+<section class="search-section">
+  <h2>Find Your Perfect Hotel</h2>
+
+  <div class="search-bar">
+    <input type="text" id="location" placeholder="Enter city or hotel name" onkeyup="filterHotels()">
+    <select id="guests" onchange="filterHotels()">
+      <option value="">Guests</option>
+      <option value="1">1 Guest</option>
+      <option value="2">2 Guests</option>
+      <option value="3">3 Guests</option>
+      <option value="4">4 Guests</option>
+    </select>
+    <select id="rating" onchange="filterHotels()">
+      <option value="">Rating</option>
+      <option value="5">5 Stars</option>
+      <option value="4">4 Stars & Up</option>
+      <option value="3">3 Stars & Up</option>
+      <option value="2">2 Stars & Up</option>
+    </select>
+    <select id="sort" onchange="filterHotels()">
+      <option value="">Sort by Price</option>
+      <option value="low">Price: Low → High</option>
+      <option value="high">Price: High → Low</option>
+    </select>
+    <button onclick="resetFilters()">Reset</button>
+  </div>
+
+  <div class="hotel-grid" id="hotelGrid"></div>
+  <div id="noResults" class="no-results" style="display:none;">No hotels found.</div>
+  <div class="pagination" id="pagination"></div>
+</section>
+
+<script>
+const themeToggle = document.getElementById("themeToggle");
+const dec = document.getElementById("decreaseBtn");
+const inc = document.getElementById("increaseBtn");
+let size = localStorage.getItem("fontSize") ? parseInt(localStorage.getItem("fontSize")) : 16;
+document.body.style.fontSize = size + "px";
+if(localStorage.getItem("theme")==="dark"){document.body.classList.add("dark-mode"); themeToggle.textContent="☀️";}
+themeToggle.addEventListener("click",()=>{document.body.classList.toggle("dark-mode");themeToggle.textContent=document.body.classList.contains("dark-mode")?"☀️":"🌙";localStorage.setItem("theme",document.body.classList.contains("dark-mode")?"dark":"light");});
+inc.addEventListener("click",()=>{if(size<40){size++;document.body.style.fontSize=size+"px";localStorage.setItem("fontSize",size);}});
+dec.addEventListener("click",()=>{if(size>10){size--;document.body.style.fontSize=size+"px";localStorage.setItem("fontSize",size);}});
+
+// Sample hotels data
+const hotels=[
+{name:"Ocean View Resort", location:"Miami", guests:2, price:120, rating:5,img:"images/ocean-view.jpg"},
+{name:"Mountain Palace", location:"Denver", guests:4, price:200, rating:4,img:"images/mountain-palace.jpg"},
+{name:"City Lights Hotel", location:"New York", guests:3, price:150, rating:3,img:"images/city-lights.jpg"},
+{name:"Lakeside Inn", location:"Seattle", guests:2, price:100, rating:4,img:"images/lakeside-inn.jpg"},
+{name:"Royal Garden", location:"Los Angeles", guests:1, price:250, rating:5,img:"images/royal-garden.jpg"},
+{name:"Beachfront Retreat", location:"San Diego", guests:2, price:130, rating:4,img:"images/beachfront-retreat.jpg"},
+{name:"Skyline Suites", location:"Chicago", guests:3, price:180, rating:4,img:"images/skyline-suites.jpg"},
+{name:"Forest Lodge", location:"Portland", guests:4, price:160, rating:3,img:"images/forest-lodge.jpg"},
+{name:"Desert Oasis", location:"Phoenix", guests:2, price:140, rating:5,img:"images/desert-oasis.jpg"},
+{name:"Urban Stay", location:"San Francisco", guests:1, price:210, rating:4,img:"images/urban-stay.jpg"},
+{name:"Canyon View Inn", location:"Grand Canyon", guests:3, price:190, rating:5,img:"images/canyon-view.jpg"},
+{name:"Riverfront Hotel", location:"Austin", guests:2, price:120, rating:4,img:"images/riverfront.jpg"},
+{name:"Garden Paradise", location:"Orlando", guests:4, price:170, rating:3,img:"images/garden-paradise.jpg"},
+{name:"Seaside Escape", location:"Santa Monica", guests:2, price:200, rating:5,img:"images/seaside-escape.jpg"},
+{name:"Historic Inn", location:"Boston", guests:3, price:180, rating:4,img:" images/historic-inn.jpg"},
+{name:"Luxury Haven", location:"Las Vegas", guests:2, price:300, rating:5,img:"images/luxury-haven.jpg"},
+{name:"Cozy Corner", location:"Nashville", guests:1, price:100, rating:3,img:"images/cozy-corner.jpg"},
+{name:"Highland Resort", location:"Salt Lake City", guests:4, price:220, rating:4,img:"images/highland-resort.jpg"},
+{name:"Riverside Retreat", location:"Minneapolis", guests:2, price:140, rating:4,img:"images/riverside-retreat.jpg"},
+{name:"Sunset Villa", location:"San Jose", guests:3, price:210, rating:5,img:"images/sunset-villa.jpg"}
+];
+
+
+const hotelGrid=document.getElementById("hotelGrid");
+const noResults=document.getElementById("noResults");
+const pagination=document.getElementById("pagination");
+const hotelsPerPage=6;
+let currentPage=1;
+let filteredHotels=hotels.slice();
+
+function renderHotelsPage(){
+  const start=(currentPage-1)*hotelsPerPage;
+  const end=start+hotelsPerPage;
+  renderHotels(filteredHotels.slice(start,end));
+  renderPagination();
+}
+
+function renderHotels(list){
+  hotelGrid.innerHTML="";
+  if(list.length===0){ noResults.style.display="block"; pagination.style.display="none"; return; }
+  noResults.style.display="none"; pagination.style.display="flex";
+  list.forEach(hotel=>{
+    const card=document.createElement("div");
+    card.className="hotel-card";
+    card.innerHTML=`
+      <img src="${hotel.img}" alt="${hotel.name}">
+      <h3>${hotel.name}</h3>
+      <p>${hotel.location} - Max ${hotel.guests} Guests</p>
+      <p>Rating: ${'★'.repeat(hotel.rating)} | Price: $${hotel.price}</p>
+      <a href="booking.html?hotel=${encodeURIComponent(hotel.name)}&price=${hotel.price}" class="btn">Book Now</a>
+    `;
+    hotelGrid.appendChild(card);
+  });
+}
+
+function renderPagination(){
+  pagination.innerHTML="";
+  const totalPages=Math.ceil(filteredHotels.length/hotelsPerPage);
+  for(let i=1;i<=totalPages;i++){
+    const btn=document.createElement("button");
+    btn.textContent=i;
+    if(i===currentPage) btn.classList.add("active");
+    btn.onclick=()=>{currentPage=i; renderHotelsPage();}
+    pagination.appendChild(btn);
+  }
+}
+
+function filterHotels(){
+  currentPage=1;
+  const locationValue=document.getElementById("location").value.toLowerCase();
+  const guestsValue=document.getElementById("guests").value;
+  const ratingValue=document.getElementById("rating").value;
+  const sortValue=document.getElementById("sort").value;
+
+  filteredHotels=hotels.filter(hotel=>{
+    const matchLocation=hotel.name.toLowerCase().includes(locationValue)||hotel.location.toLowerCase().includes(locationValue);
+    const matchGuests=guestsValue?hotel.guests>=parseInt(guestsValue):true;
+    const matchRating=ratingValue?hotel.rating>=parseInt(ratingValue):true;
+    return matchLocation && matchGuests && matchRating;
+  });
+
+  if(sortValue==="low") filteredHotels.sort((a,b)=>a.price-b.price);
+  if(sortValue==="high") filteredHotels.sort((a,b)=>b.price-a.price);
+
+  renderHotelsPage();
+}
+
+function resetFilters(){
+  document.getElementById("location").value="";
+  document.getElementById("guests").value="";
+  document.getElementById("rating").value="";
+  document.getElementById("sort").value="";
+  filteredHotels=hotels.slice();
+  currentPage=1;
+  renderHotelsPage();
+}
+
+window.onload=()=>renderHotelsPage();
+</script>
+
+</body>
+</html>

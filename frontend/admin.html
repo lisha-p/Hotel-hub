@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Admin Login - HOTELHUB</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: #e0f7ff;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+    }
+
+    .login-container {
+      display: flex;
+      background: white;
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 0 20px rgba(0,0,0,0.1);
+      max-width: 880px;
+      width: 100%;
+    }
+
+    /* LEFT IMAGE */
+    .image-section {
+      flex: 1;
+      background: url('https://images.unsplash.com/photo-1566073771259-6a8506099945') center/cover no-repeat;
+      min-height: 450px;
+    }
+
+    /* RIGHT FORM */
+    .form-section {
+      flex: 1;
+      padding: 3rem;
+      background: #ffffff;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .form-section h2 {
+      color: #006699;
+      font-size: 2rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .form-section h3 {
+      color: #333;
+      margin-bottom: 2rem;
+      font-size: 1.2rem;
+      font-weight: 500;
+    }
+
+    form label {
+      display: block;
+      margin: 1rem 0 0.5rem;
+      font-weight: 600;
+      color: #333;
+    }
+
+    input {
+      width: 100%;
+      padding: 0.8rem;
+      font-size: 1rem;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+    }
+
+    .login-btn {
+      width: 100%;
+      margin-top: 2rem;
+      padding: 0.9rem;
+      font-size: 1rem;
+      background: #0099cc;
+      border: none;
+      color: white;
+      font-weight: bold;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+
+    .login-btn:hover {
+      background: #0077aa;
+    }
+
+    .error-message {
+      color: red;
+      font-weight: bold;
+      margin-top: 10px;
+      text-align: center;
+    }
+
+    @media (max-width: 768px) {
+      .login-container {
+        flex-direction: column;
+      }
+
+      .image-section {
+        height: 200px;
+      }
+
+      .form-section {
+        padding: 2rem;
+      }
+
+      .form-section h2 {
+        font-size: 1.4rem;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="login-container">
+    
+    <!-- LEFT SIDE IMAGE -->
+    <div class="image-section"></div>
+
+    <!-- RIGHT SIDE LOGIN -->
+    <div class="form-section">
+      <h2>HOTELHUB Admin</h2>
+      <h3>Login to Dashboard</h3>
+
+      <form id="loginForm">
+        <label for="username">Admin Username</label>
+        <input type="text" id="username" placeholder="Enter admin username" required>
+
+        <label for="password">Admin Password</label>
+        <input type="password" id="password" placeholder="Enter admin password" required>
+
+        <button type="submit" class="login-btn">Login</button>
+        <div class="error-message" id="errorMsg"></div>
+      </form>
+    </div>
+
+  </div>
+
+  
+  <script>
+    const form = document.getElementById('loginForm');
+    const errorMsg = document.getElementById('errorMsg');
+
+    form.addEventListener('submit', function(event) {
+      event.preventDefault();
+
+      const username = document.getElementById('username').value.trim();
+      const password = document.getElementById('password').value.trim();
+
+      // ADMIN CREDENTIALS
+      if (username === 'hotelhub' && password === 'hotelhub@123') {
+        window.location.href = 'admin_dashboard.html';
+      } else {
+        errorMsg.textContent = '❌ Invalid admin username or password';
+      }
+    });
+  </script>
+
+</body>
+</html>

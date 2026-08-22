@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HotelHub - Payment</title>
+<style>
+  body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: url('https://images.unsplash.com/photo-1542314831-068cd1dbfeeb') center/cover no-repeat;
+    background-size: cover;
+    color: #000;
+    font-size: 16px;
+  }
+
+  header {
+    background: rgba(30,30,47,0.85);
+    color: #fff;
+    padding: 1rem 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+
+  nav a {
+    color: #fff;
+    margin-left: 15px;
+    text-decoration: none;
+    font-size: 1.1rem;
+  }
+
+  .container {
+    max-width: 600px;
+    margin: 50px auto;
+    background: rgba(255,255,255,0.9);
+    padding: 30px;
+    border-radius: 10px;
+    box-shadow: 0 0 15px rgba(0,0,0,0.3);
+  }
+
+  h2 {
+    text-align: center;
+    margin-bottom: 20px;
+  }
+
+  label {
+    display: block;
+    margin-top: 15px;
+    margin-bottom: 5px;
+  }
+
+  input, select {
+    width: 100%;
+    padding: 10px;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+  }
+
+  button {
+    width: 100%;
+    padding: 12px;
+    background: #ff6600;
+    color: #fff;
+    border: none;
+    border-radius: 5px;
+    font-size: 1.1rem;
+    margin-top: 20px;
+    cursor: pointer;
+  }
+
+  button:hover {
+    background: #e65c00;
+  }
+
+  .payment-methods {
+    display: flex;
+    gap: 10px;
+    margin-top: 15px;
+  }
+
+  .payment-methods button {
+    flex: 1;
+    padding: 10px;
+    font-size: 0.9rem;
+  }
+
+  .booking-summary {
+    background: #f9f9f9;
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    border-left: 4px solid #ff6600;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h2>HotelHub</h2>
+  <nav>
+    <a href="index.html">Home</a>
+    <a href="search.html">Search</a>
+    <a href="payment.html">Payment</a>
+  </nav>
+</header>
+
+<div class="container">
+  <h2>Make a Payment</h2>
+
+  <div class="booking-summary" id="bookingSummary">
+    <h3>Booking Summary</h3>
+    <p id="summaryDetails">Loading booking details...</p>
+  </div>
+
+  <label for="city">Select City</label>
+  <select id="city"></select>
+
+  <label for="hotel">Select Hotel</label>
+  <select id="hotel">
+    <option value="Historic Hotel">Historic Hotel</option>
+    <option value="Mountain Palace">Mountain Palace Hotel</option>
+    <option value="City Lakeside Hotel">City Lakeside Hotel</option>
+  </select>
+
+  <label for="name">Name on Card</label>
+  <input type="text" id="name" placeholder="Enter name">
+
+  <label for="card">Card Number</label>
+  <input type="text" id="card" placeholder="xxxx-xxxx-xxxx-xxxx">
+
+  <label for="expiry">Expiry Date</label>
+  <input type="text" id="expiry" placeholder="MM/YY">
+
+  <label for="cvv">CVV</label>
+  <input type="password" id="cvv" placeholder="XXX">
+
+  <h3>Or pay with</h3>
+  <div class="payment-methods">
+    <button onclick="alert('PayPal payment demo')">PayPal</button>
+    <button onclick="alert('Google Pay payment demo')">Google Pay</button>
+    <button onclick="alert('Credit Card payment demo')">Credit Card</button>
+  </div>
+
+  <button onclick="submitPayment()">Pay Now</button>
+</div>
+
+<script>
+/* ⭐ ALL CITIES */
+const cities = [
+  "Miami","Denver","New York","Seattle","Los Angeles","San Diego","Chicago","Portland",
+  "Phoenix","San Francisco","Grand Canyon","Austin","Orlando","Santa Monica","Boston",
+  "Las Vegas","Nashville","Salt Lake City","Minneapolis","San Jose"
+];
+
+const citySelect = document.getElementById("city");
+cities.forEach(city => {
+  let option = document.createElement("option");
+  option.value = city;
+  option.textContent = city;
+  citySelect.appendChild(option);
+});
+
+/* ⭐ LOAD BOOKING SUMMARY */
+function loadBookingSummary() {
+  // Get the latest booking from localStorage
+  let bookings = JSON.parse(localStorage.getItem("hotelBookings")) || [];
+  let offlineBookings = JSON.parse(localStorage.getItem("offlineBookings")) || [];
+  
+  let latestBooking = null;
+  
+  if (bookings.length > 0) {
+    latestBooking = bookings[bookings.length - 1];
+  } else if (offlineBookings.length > 0) {
+    latestBooking = offlineBookings[offlineBookings.length - 1];
+  }
+  
+  const summaryElement = document.getElementById("summaryDetails");
+  
+  if (latestBooking) {
+    summaryElement.innerHTML = `
+      <strong>Hotel:</strong> ${latestBooking.hotel}<br>
+      <strong>Guest:</strong> ${latestBooking.guestName}<br>
+      <strong>Check-in:</strong> ${latestBooking.checkIn}<br>
+      <strong>Check-out:</strong> ${latestBooking.checkOut}<br>
+      <strong>Guests:</strong> ${latestBooking.guests}<br>
+      <strong>Total:</strong> ${latestBooking.totalPrice}
+    `;
+  } else {
+    summaryElement.textContent = "No booking details found. Please complete a booking first.";
+  }
+}
+
+/* ⭐ PAYMENT FUNCTION */
+function submitPayment(){
+  const city = document.getElementById("city").value;
+  const hotel = document.getElementById("hotel").value;
+  const name = document.getElementById("name").value;
+  const card = document.getElementById("card").value;
+  const expiry = document.getElementById("expiry").value;
+  const cvv = document.getElementById("cvv").value;
+
+  if(!city || !name || !card || !expiry || !cvv){
+    alert("Please fill all details!");
+    return;
+  }
+
+  alert(`Payment successful for ${hotel} in ${city}!\nThank you, ${name}.`);
+  
+  // Redirect to confirmation
+  setTimeout(() => {
+    window.location.href = "index.html";
+  }, 2000);
+}
+
+// Load booking summary when page loads
+document.addEventListener("DOMContentLoaded", loadBookingSummary);
+</script>
+
+</body>
+</html>
