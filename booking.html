@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>HotelHub - Booking Confirmation</title>
+<style>
+  body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: #f4f4f4;
+    color: #000;
+    transition: background 0.3s, color 0.3s;
+    font-size: 16px;
+  }
+
+  body.dark-mode {
+    background: #111;
+    color: #fff;
+  }
+
+  header {
+    background: #1e1e2f;
+    color: #fff;
+    padding: 1rem 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  nav a {
+    color: #fff;
+    margin-left: 15px;
+    text-decoration: none;
+    font-size: 1.1rem;
+  }
+
+  /* Controls */
+  .controls {
+    position: absolute;
+    left: 10px;
+    top: 10px;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+  }
+  .icon-btn {
+    cursor: pointer;
+    font-size: 22px;
+    user-select: none;
+    color: #000;
+    background: none;
+    border: none;
+  }
+  body.dark-mode .icon-btn {
+    color: #fff;
+  }
+  .font-btn {
+    cursor: pointer;
+    padding: 3px 8px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+    background: #fff;
+    color: #000;
+  }
+  body.dark-mode .icon-btn,
+  body.dark-mode .font-btn {
+    background: #333;
+    color: #e6dcdc;
+    border: 1px solid #555;
+  }
+
+  /* Booking Section */
+  .booking-section {
+    max-width: 600px;
+    margin: 40px auto;
+    padding: 25px;
+    background: #fff;
+    border-radius: 15px;
+    box-shadow: 0 6px 15px rgba(0,0,0,0.1);
+    transition: background 0.3s;
+  }
+
+  body.dark-mode .booking-section {
+    background: #222;
+    border: 1px solid #444;
+  }
+
+  h2 {
+    color: #ff6600;
+    text-align: center;
+    margin-bottom: 20px;
+  }
+
+  label {
+    font-size: 16px;
+    margin-top: 10px;
+    display: block;
+  }
+
+  input, select {
+    width: 100%;
+    padding: 12px;
+    margin-top: 5px;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+    font-size: 16px;
+    background: #fff;
+  }
+
+  body.dark-mode input,
+  body.dark-mode select {
+    background: #333;
+    color: #fff;
+    border: 1px solid #555;
+  }
+
+  button {
+    width: 100%;
+    padding: 14px;
+    background: #ff6600;
+    border: none;
+    margin-top: 20px;
+    color: #fff;
+    font-size: 18px;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: background 0.3s;
+  }
+
+  button:hover {
+    background: #e65c00;
+  }
+
+  .success {
+    text-align: center;
+    color: green;
+    margin-top: 15px;
+    display: none;
+    font-size: 18px;
+  }
+
+  .offline-notice {
+    background: #fff3cd;
+    color: #856404;
+    padding: 10px;
+    border-radius: 5px;
+    margin: 10px 0;
+    border: 1px solid #ffeaa7;
+    display: none;
+  }
+
+  body.dark-mode .offline-notice {
+    background: #332701;
+    color: #ffd351;
+    border: 1px solid #665200;
+  }
+</style>
+</head>
+<body>
+<header>
+  <div class="controls">
+    <span id="themeToggle" class="icon-btn">🌙</span>
+    <button id="decreaseBtn" class="font-btn">A-</button>
+    <button id="increaseBtn" class="font-btn">A+</button>
+  </div>
+  <h2>HotelHub</h2>
+  <nav>
+    <a href="index.html">Home</a>
+    <a href="about.html">About</a>
+    <a href="login.html">Login</a>
+    <a href="search.html">Search</a>
+    <a href="admin.html">Admin</a>
+  </nav>
+</header>
+
+<section class="booking-section">
+  <h2>Booking Details</h2>
+  
+  <div class="offline-notice" id="offlineNotice">
+    ⚠️ You are currently offline. This booking will be saved locally and synced when connection is restored.
+  </div>
+
+  <label>Full Name</label>
+  <input type="text" id="name">
+
+  <label>Email</label>
+  <input type="email" id="email">
+
+  <label>Phone Number</label>
+  <input type="tel" id="phone">
+
+  <label>Check-in Date</label>
+  <input type="date" id="checkin">
+
+  <label>Check-out Date</label>
+  <input type="date" id="checkout">
+
+  <label>Number of Guests</label>
+  <select id="guests">
+    <option value="1">1 Guest</option>
+    <option value="2">2 Guests</option>
+    <option value="3">3 Guests</option>
+    <option value="4">4 Guests</option>
+  </select>
+
+  <label>Selected Hotel</label>
+  <input type="text" id="hotel" readonly>
+
+  <label>Total Price</label>
+  <input type="text" id="totalPrice" readonly>
+
+  <button onclick="confirmBooking()">Confirm Booking</button>
+
+  <p class="success" id="successMsg">🎉 Booking Successful!</p>
+</section>
+
+<script>
+/* ------------------------ THEME + FONT SIZE ------------------------ */
+const themeToggle = document.getElementById("themeToggle");
+let size = localStorage.getItem("fontSize") ? parseInt(localStorage.getItem("fontSize")) : 16;
+document.body.style.fontSize = size + "px";
+
+if(localStorage.getItem("theme")==="dark"){
+  document.body.classList.add("dark-mode");
+  themeToggle.textContent="☀️";
+}
+
+themeToggle.onclick = () => {
+  document.body.classList.toggle("dark-mode");
+  themeToggle.textContent = document.body.classList.contains("dark-mode") ? "☀️" : "🌙";
+  localStorage.setItem("theme", document.body.classList.contains("dark-mode") ? "dark" : "light");
+};
+
+document.getElementById("increaseBtn").onclick = () => {
+  if(size < 40){ size++; document.body.style.fontSize = size + "px"; localStorage.setItem("fontSize", size); }
+};
+
+document.getElementById("decreaseBtn").onclick = () => {
+  if(size > 10){ size--; document.body.style.fontSize = size + "px"; localStorage.setItem("fontSize", size); }
+};
+
+/* ------------------------ BOOKING FUNCTION ------------------------ */
+function confirmBooking() {
+  let name = document.getElementById("name").value.trim();
+  let email = document.getElementById("email").value.trim();
+  let phone = document.getElementById("phone").value.trim();
+  let checkin = document.getElementById("checkin").value;
+  let checkout = document.getElementById("checkout").value;
+  let guests = document.getElementById("guests").value;
+  let hotel = document.getElementById("hotel").value;
+  let totalPrice = document.getElementById("totalPrice").value;
+
+  if (!name || !email || !phone || !checkin || !checkout) {
+    alert("Please fill all fields!");
+    return;
+  }
+
+  const bookingData = {
+    guestName: name,
+    guestEmail: email,
+    guestPhone: phone,
+    checkIn: checkin,
+    checkOut: checkout,
+    guests: guests,
+    hotel: hotel,
+    totalPrice: totalPrice,
+    bookingDate: new Date().toLocaleString()
+  };
+
+  // Check if online
+  if (navigator.onLine) {
+    // Save to online bookings
+    let bookings = JSON.parse(localStorage.getItem("hotelBookings")) || [];
+    bookings.push(bookingData);
+    localStorage.setItem("hotelBookings", JSON.stringify(bookings));
+    
+    document.getElementById("successMsg").style.display = "block";
+    setTimeout(() => {
+      window.location.href = "payment.html";
+    }, 2000);
+  } else {
+    // Save to offline bookings
+    let offlineBookings = JSON.parse(localStorage.getItem("offlineBookings")) || [];
+    offlineBookings.push({
+      ...bookingData,
+      synced: false,
+      offlineId: Date.now()
+    });
+    localStorage.setItem("offlineBookings", JSON.stringify(offlineBookings));
+    
+    document.getElementById("successMsg").textContent = "🎉 Booking saved offline! It will sync when connection is restored.";
+    document.getElementById("successMsg").style.display = "block";
+    
+    setTimeout(() => {
+      window.location.href = "index.html";
+    }, 3000);
+  }
+}
+
+/* ------------------------ PAGE LOAD ------------------------ */
+document.addEventListener("DOMContentLoaded", function() {
+  // Get hotel from URL parameters
+  const urlParams = new URLSearchParams(window.location.search);
+  const hotel = urlParams.get('hotel');
+  const price = urlParams.get('price');
+  
+  if (hotel) {
+    document.getElementById("hotel").value = decodeURIComponent(hotel);
+  }
+  
+  // Calculate total price (simple calculation)
+  if (price) {
+    document.getElementById("totalPrice").value = `$${price}`;
+  }
+  
+  // Set minimum date to today
+  const today = new Date().toISOString().split('T')[0];
+  document.getElementById("checkin").min = today;
+  
+  // Update offline notice
+  if (!navigator.onLine) {
+    document.getElementById("offlineNotice").style.display = 'block';
+  }
+  
+  // Listen for online/offline events
+  window.addEventListener('online', function() {
+    document.getElementById("offlineNotice").style.display = 'none';
+  });
+  
+  window.addEventListener('offline', function() {
+    document.getElementById("offlineNotice").style.display = 'block';
+  });
+});
+</script>
+
+</body>
+</html>

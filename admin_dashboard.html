@@ -1,0 +1,803 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HotelHub Admin Dashboard</title>
+<style>
+body {
+  font-family: 'Poppins', sans-serif;
+  background: #e8f6ff;
+  margin: 0;
+  padding: 0;
+  transition: background 0.3s, color 0.3s;
+}
+
+body.dark-mode {
+  background: #1a1a1a;
+  color: white;
+}
+
+header {
+  background: #0077aa;
+  padding: 1rem 2rem;
+  color: white;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.dark-mode header {
+  background: #000;
+}
+
+header h1 { margin: 0; }
+
+nav button {
+  background: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: bold;
+  margin-left: 10px;
+}
+
+.dark-mode nav button {
+  background: #333;
+  color: white;
+}
+
+.dashboard {
+  padding: 2rem;
+}
+
+.section {
+  background: white;
+  padding: 1.5rem;
+  border-radius: 12px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  margin-bottom: 2rem;
+}
+
+.dark-mode .section {
+  background: #222;
+  border: 1px solid #444;
+}
+
+.section h2 {
+  color: #0077aa;
+  margin-bottom: 1rem;
+}
+
+.dark-mode .section h2 {
+  color: #0099cc;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1rem;
+}
+
+th, td {
+  padding: 12px;
+  border-bottom: 1px solid #ccc;
+  text-align: left;
+}
+
+.dark-mode th, .dark-mode td {
+  border-bottom: 1px solid #555;
+}
+
+th {
+  background: #0099cc;
+  color: white;
+}
+
+.action-btn {
+  background: #ff4444;
+  color: white;
+  padding: 5px 12px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  margin-right: 5px;
+}
+
+.view-btn {
+  background: #0099cc;
+  color: white;
+  padding: 5px 12px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  margin-right: 5px;
+}
+
+.verify-btn {
+  background: #28a745;
+  color: white;
+  padding: 5px 12px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  margin-right: 5px;
+}
+
+.popup-bg {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  display: none;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.popup-box {
+  background: white;
+  padding: 2rem;
+  width: 500px;
+  border-radius: 12px;
+  box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+.dark-mode .popup-box {
+  background: #222;
+  color: white;
+}
+
+.close {
+  float: right;
+  cursor: pointer;
+  color: red;
+  font-size: 1.2rem;
+  font-weight: bold;
+}
+
+input, select, textarea {
+  width: 100%;
+  padding: .6rem;
+  margin-top: .5rem;
+  border: 1px solid #bbb;
+  border-radius: 8px;
+  font-family: inherit;
+}
+
+.dark-mode input, .dark-mode select, .dark-mode textarea {
+  background: #333;
+  color: white;
+  border: 1px solid #555;
+}
+
+button.save-btn {
+  background: #0077aa;
+  color: white;
+  margin-top: 1rem;
+  padding: .8rem;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  width: 100%;
+}
+
+.search-box {
+  padding: 8px;
+  margin-bottom: 15px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  width: 300px;
+}
+
+.dark-mode .search-box {
+  background: #333;
+  color: white;
+  border: 1px solid #555;
+}
+
+/* Review Section Styles */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 15px;
+  margin-bottom: 20px;
+}
+
+.stat-card {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 20px;
+  border-radius: 10px;
+  text-align: center;
+}
+
+.stat-card h3 {
+  margin: 0 0 10px 0;
+  font-size: 14px;
+  opacity: 0.9;
+}
+
+.stat-card span {
+  font-size: 24px;
+  font-weight: bold;
+}
+
+.filters {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 15px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.filters select, .filters button {
+  padding: 8px 12px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  background: white;
+  cursor: pointer;
+}
+
+.dark-mode .filters select, .dark-mode .filters button {
+  background: #333;
+  color: white;
+  border: 1px solid #555;
+}
+
+.rating-stars {
+  color: #ffc107;
+  font-size: 16px;
+}
+
+.review-comment {
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.status-verified {
+  background: #28a745;
+  color: white;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  display: inline-block;
+}
+
+.status-pending {
+  background: #ffc107;
+  color: black;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  display: inline-block;
+}
+
+.notes-textarea {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  margin-bottom: 10px;
+  resize: vertical;
+}
+
+.review-details {
+  line-height: 1.6;
+}
+
+.review-details p {
+  margin: 8px 0;
+}
+
+.review-comment-box {
+  background: #f5f5f5;
+  padding: 15px;
+  border-radius: 8px;
+  margin: 10px 0;
+  border-left: 4px solid #0077aa;
+}
+
+.dark-mode .review-comment-box {
+  background: #333;
+  border-left: 4px solid #0099cc;
+}
+</style>
+</head>
+
+<body>
+
+<header>
+  <h1>HotelHub Admin Dashboard</h1>
+  <nav>
+    <button onclick="toggleDarkMode()">Dark Mode</button>
+    <button onclick="logout()">Logout</button>
+  </nav>
+</header>
+
+<div class="dashboard">
+
+  <!-- USERS -->
+  <div class="section">
+    <h2>Logged-In Users</h2>
+    <input type="text" id="userSearch" class="search-box" placeholder="Search user email..." onkeyup="filterUsers()">
+    <table>
+      <thead>
+        <tr>
+          <th>Email</th>
+          <th>Login Time</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody id="userTable"></tbody>
+    </table>
+  </div>
+
+  <!-- BOOKINGS -->
+  <div class="section">
+    <h2>Hotel Bookings</h2>
+    <input type="text" id="bookingSearch" class="search-box" placeholder="Search booking by hotel..." onkeyup="filterBookings()">
+    <table>
+      <thead>
+        <tr>
+          <th>Hotel</th>
+          <th>Email</th>
+          <th>Check-In</th>
+          <th>Check-Out</th>
+          <th>Guests</th>
+          <th>Status</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody id="bookingTable"></tbody>
+    </table>
+  </div>
+
+  <!-- REVIEWS & RATINGS SECTION -->
+  <div class="section">
+    <h2>Customer Reviews & Ratings</h2>
+    
+    <!-- Review Statistics -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <h3>Total Reviews</h3>
+        <span id="totalReviews">0</span>
+      </div>
+      <div class="stat-card">
+        <h3>Verified Reviews</h3>
+        <span id="verifiedReviews">0</span>
+      </div>
+      <div class="stat-card">
+        <h3>Average Rating</h3>
+        <span id="averageRating">0.0</span>
+      </div>
+      <div class="stat-card">
+        <h3>Pending Verification</h3>
+        <span id="pendingReviews">0</span>
+      </div>
+    </div>
+
+    <!-- Search and Filters -->
+    <div class="filters">
+      <input type="text" id="reviewSearch" class="search-box" placeholder="Search by customer, hotel, or comment..." onkeyup="filterReviews()">
+      <select id="reviewFilter" onchange="filterReviews()">
+        <option value="all">All Reviews</option>
+        <option value="verified">Verified Only</option>
+        <option value="pending">Pending Verification</option>
+        <option value="5">5 Stars</option>
+        <option value="4">4+ Stars</option>
+        <option value="3">3+ Stars</option>
+      </select>
+      <button onclick="loadReviews()">Refresh Reviews</button>
+    </div>
+
+    <!-- Reviews Table -->
+    <table>
+      <thead>
+        <tr>
+          <th>Customer</th>
+          <th>Contact</th>
+          <th>Hotel</th>
+          <th>Rating</th>
+          <th>Review</th>
+          <th>Date</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody id="reviewsTable">
+        <!-- Reviews will be loaded here -->
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ADD HOTEL -->
+  <div class="section">
+    <h2>Add New Hotel</h2>
+
+    <label>Hotel Name</label>
+    <input type="text" id="hname">
+
+    <label>City</label>
+    <input type="text" id="hcity">
+
+    <label>Description</label>
+    <textarea id="hdesc" rows="3"></textarea>
+
+    <label>Image URL</label>
+    <input type="text" id="himg">
+
+    <label>Price per Night ($)</label>
+    <input type="number" id="hprice">
+
+    <label>Max Guests</label>
+    <input type="number" id="hguests">
+
+    <label>Rating (1-5)</label>
+    <input type="number" id="hrating" min="1" max="5">
+
+    <button class="save-btn" onclick="addHotel()">Add Hotel</button>
+  </div>
+
+</div>
+
+<!-- POPUP FOR BOOKING DETAILS -->
+<div class="popup-bg" id="popup">
+  <div class="popup-box">
+    <span class="close" onclick="closePopup()">✖</span>
+    <h3>Booking Details</h3>
+    <div id="popupContent"></div>
+  </div>
+</div>
+
+<!-- POPUP FOR REVIEW DETAILS -->
+<div class="popup-bg" id="reviewPopup">
+  <div class="popup-box">
+    <span class="close" onclick="closeReviewPopup()">✖</span>
+    <h3>Review Details</h3>
+    <div id="reviewPopupContent"></div>
+  </div>
+</div>
+
+<script>
+/* ---------------- DARK MODE ---------------- */
+function toggleDarkMode() {
+  document.body.classList.toggle("dark-mode");
+  localStorage.setItem("adminTheme", document.body.classList.contains("dark-mode") ? "dark" : "light");
+}
+
+// Load theme preference
+if (localStorage.getItem("adminTheme") === "dark") {
+  document.body.classList.add("dark-mode");
+}
+
+/* ---------------- LOGOUT ---------------- */
+function logout() {
+  if (confirm("Are you sure you want to logout?")) {
+    window.location.href = "admin.html";
+  }
+}
+
+/* ---------------- USERS ---------------- */
+function loadUsers() {
+  let users = JSON.parse(localStorage.getItem("hotelUsers")) || [];
+  let table = document.getElementById("userTable");
+  table.innerHTML = "";
+
+  if (users.length === 0) {
+    table.innerHTML = `<tr><td colspan="3" style="text-align: center;">No users found</td></tr>`;
+    return;
+  }
+
+  users.forEach((u, i) => {
+    table.innerHTML += `
+      <tr>
+        <td>${u.email}</td>
+        <td>${u.loginTime}</td>
+        <td><button class='action-btn' onclick="deleteUser(${i})">Delete</button></td>
+      </tr>`;
+  });
+}
+
+function deleteUser(i) {
+  if (confirm("Are you sure you want to delete this user?")) {
+    let users = JSON.parse(localStorage.getItem("hotelUsers")) || [];
+    users.splice(i, 1);
+    localStorage.setItem("hotelUsers", JSON.stringify(users));
+    loadUsers();
+  }
+}
+
+function filterUsers() {
+  let q = document.getElementById("userSearch").value.toLowerCase();
+  let rows = document.querySelectorAll("#userTable tr");
+  rows.forEach(r => {
+    r.style.display = r.innerText.toLowerCase().includes(q) ? "" : "none";
+  });
+}
+
+/* ---------------- BOOKINGS ---------------- */
+function loadBookings() {
+  let bookings = JSON.parse(localStorage.getItem("hotelBookings")) || [];
+  let offlineBookings = JSON.parse(localStorage.getItem("offlineBookings")) || [];
+  
+  // Combine online and offline bookings
+  let allBookings = [...bookings, ...offlineBookings];
+  
+  let table = document.getElementById("bookingTable");
+  table.innerHTML = "";
+
+  if (allBookings.length === 0) {
+    table.innerHTML = `<tr><td colspan="7" style="text-align: center;">No bookings found</td></tr>`;
+    return;
+  }
+
+  allBookings.forEach((b, i) => {
+    const status = b.synced === false ? "Offline (Pending Sync)" : "Confirmed";
+    table.innerHTML += `
+      <tr>
+        <td>${b.hotel || b.hotelName || 'N/A'}</td>
+        <td>${b.guestEmail || b.email || 'N/A'}</td>
+        <td>${b.checkin || b.checkIn || 'N/A'}</td>
+        <td>${b.checkout || b.checkOut || 'N/A'}</td>
+        <td>${b.guests || 'N/A'}</td>
+        <td>${status}</td>
+        <td>
+          <button class="view-btn" onclick="viewBooking(${i}, ${b.synced === false})">View</button>
+          <button class='action-btn' onclick="deleteBooking(${i}, ${b.synced === false})">Delete</button>
+        </td>
+      </tr>`;
+  });
+}
+
+function viewBooking(i, isOffline) {
+  let bookings = isOffline ? 
+    JSON.parse(localStorage.getItem("offlineBookings")) || [] :
+    JSON.parse(localStorage.getItem("hotelBookings")) || [];
+  let b = bookings[i];
+
+  let details = `
+      <p><b>Hotel:</b> ${b.hotel || b.hotelName || 'N/A'}</p>
+      <p><b>Guest Name:</b> ${b.guestName || b.name || 'N/A'}</p>
+      <p><b>Email:</b> ${b.guestEmail || b.email || 'N/A'}</p>
+      <p><b>Phone:</b> ${b.guestPhone || b.phone || 'N/A'}</p>
+      <p><b>Check-In:</b> ${b.checkin || b.checkIn || 'N/A'}</p>
+      <p><b>Check-Out:</b> ${b.checkout || b.checkOut || 'N/A'}</p>
+      <p><b>Guests:</b> ${b.guests || 'N/A'}</p>
+      <p><b>Total Price:</b> $${b.totalPrice || b.price || 'N/A'}</p>
+      <p><b>Status:</b> ${b.synced === false ? "Offline (Pending Sync)" : "Confirmed"}</p>
+  `;
+
+  document.getElementById("popupContent").innerHTML = details;
+  document.getElementById("popup").style.display = "flex";
+}
+
+function closePopup() {
+  document.getElementById("popup").style.display = "none";
+}
+
+function deleteBooking(i, isOffline) {
+  if (confirm("Are you sure you want to delete this booking?")) {
+    let storageKey = isOffline ? "offlineBookings" : "hotelBookings";
+    let bookings = JSON.parse(localStorage.getItem(storageKey)) || [];
+    bookings.splice(i, 1);
+    localStorage.setItem(storageKey, JSON.stringify(bookings));
+    loadBookings();
+  }
+}
+
+function filterBookings() {
+  let q = document.getElementById("bookingSearch").value.toLowerCase();
+  let rows = document.querySelectorAll("#bookingTable tr");
+  rows.forEach(r => {
+    r.style.display = r.innerText.toLowerCase().includes(q) ? "" : "none";
+  });
+}
+
+/* ---------------- REVIEWS MANAGEMENT ---------------- */
+function loadReviews() {
+  let reviews = JSON.parse(localStorage.getItem("hotelReviews")) || [];
+  
+  // Update stats
+  updateReviewStats(reviews);
+  
+  // Display reviews
+  displayReviews(reviews);
+}
+
+function updateReviewStats(reviews) {
+  const totalReviews = reviews.length;
+  const verifiedReviews = reviews.filter(r => r.verified).length;
+  const pendingReviews = totalReviews - verifiedReviews;
+  const averageRating = reviews.length > 0 ? 
+    (reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length).toFixed(1) : 0;
+
+  document.getElementById('totalReviews').textContent = totalReviews;
+  document.getElementById('verifiedReviews').textContent = verifiedReviews;
+  document.getElementById('averageRating').textContent = averageRating;
+  document.getElementById('pendingReviews').textContent = pendingReviews;
+}
+
+function displayReviews(reviews) {
+  const table = document.getElementById("reviewsTable");
+  table.innerHTML = '';
+
+  if (reviews.length === 0) {
+    table.innerHTML = '<tr><td colspan="8" style="text-align: center;">No reviews found</td></tr>';
+    return;
+  }
+
+  // Sort by date (newest first)
+  reviews.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+  reviews.forEach((review, index) => {
+    const stars = '★'.repeat(review.rating) + '☆'.repeat(5 - review.rating);
+    const status = review.verified ? 'Verified' : 'Pending';
+    const statusClass = review.verified ? 'status-verified' : 'status-pending';
+    
+    table.innerHTML += `
+      <tr>
+        <td>
+          <strong>${review.customerName || review.name || 'N/A'}</strong>
+        </td>
+        <td>
+          <div>${review.customerEmail || review.email || 'N/A'}</div>
+          <div style="font-size: 12px; color: #666;">${review.customerPhone || review.phone || 'N/A'}</div>
+        </td>
+        <td>${review.hotel || 'N/A'}</td>
+        <td>
+          <div class="rating-stars" title="${review.rating} stars">${stars}</div>
+          <div style="font-size: 12px; color: #666;">${review.rating}/5</div>
+        </td>
+        <td class="review-comment" title="${review.comment || 'No comment'}">
+          ${review.comment || 'No comment provided'}
+        </td>
+        <td>${new Date(review.date).toLocaleDateString()}</td>
+        <td><span class="${statusClass}">${status}</span></td>
+        <td>
+          <button class="view-btn" onclick="viewReviewDetails(${index})">View</button>
+          ${!review.verified ? `<button class="verify-btn" onclick="verifyReview(${index})">Verify</button>` : ''}
+          <button class="action-btn" onclick="deleteReview(${index})">Delete</button>
+        </td>
+      </tr>
+    `;
+  });
+}
+
+function viewReviewDetails(index) {
+  let reviews = JSON.parse(localStorage.getItem("hotelReviews")) || [];
+  let review = reviews[index];
+
+  let details = `
+    <div class="review-details">
+      <p><strong>Customer Name:</strong> ${review.customerName || review.name || 'N/A'}</p>
+      <p><strong>Email:</strong> ${review.customerEmail || review.email || 'N/A'}</p>
+      <p><strong>Phone:</strong> ${review.customerPhone || review.phone || 'N/A'}</p>
+      <p><strong>Hotel:</strong> ${review.hotel || 'N/A'}</p>
+      <p><strong>Rating:</strong> ${'★'.repeat(review.rating)} (${review.rating}/5 stars)</p>
+      <p><strong>Date:</strong> ${new Date(review.date).toLocaleString()}</p>
+      <p><strong>Status:</strong> <span class="${review.verified ? 'status-verified' : 'status-pending'}">${review.verified ? 'Verified' : 'Pending Verification'}</span></p>
+      
+      <div style="margin: 15px 0;">
+        <strong>Review Comment:</strong>
+        <div class="review-comment-box">
+          ${review.comment || 'No comment provided'}
+        </div>
+      </div>
+      
+      ${review.adminNotes ? `
+        <div style="margin: 15px 0;">
+          <strong>Admin Notes:</strong>
+          <div style="background: #fff3cd; padding: 10px; border-radius: 5px; margin-top: 5px;">
+            ${review.adminNotes}
+          </div>
+        </div>
+      ` : ''}
+    </div>
+  `;
+
+  document.getElementById("reviewPopupContent").innerHTML = details;
+  document.getElementById("reviewPopup").style.display = "flex";
+}
+
+function closeReviewPopup() {
+  document.getElementById("reviewPopup").style.display = "none";
+}
+
+function verifyReview(index) {
+  let reviews = JSON.parse(localStorage.getItem("hotelReviews")) || [];
+  reviews[index].verified = true;
+  reviews[index].adminNotes = "Verified by admin on " + new Date().toLocaleString();
+  localStorage.setItem("hotelReviews", JSON.stringify(reviews));
+  loadReviews();
+  alert("Review verified successfully!");
+}
+
+function deleteReview(index) {
+  if (confirm("Are you sure you want to delete this review?")) {
+    let reviews = JSON.parse(localStorage.getItem("hotelReviews")) || [];
+    reviews.splice(index, 1);
+    localStorage.setItem("hotelReviews", JSON.stringify(reviews));
+    loadReviews();
+    alert("Review deleted successfully!");
+  }
+}
+
+function filterReviews() {
+  let searchTerm = document.getElementById('reviewSearch').value.toLowerCase();
+  let filterValue = document.getElementById('reviewFilter').value;
+  let reviews = JSON.parse(localStorage.getItem("hotelReviews")) || [];
+  
+  let filteredReviews = reviews.filter(review => {
+    const matchesSearch = 
+      (review.customerName && review.customerName.toLowerCase().includes(searchTerm)) ||
+      (review.customerEmail && review.customerEmail.toLowerCase().includes(searchTerm)) ||
+      (review.hotel && review.hotel.toLowerCase().includes(searchTerm)) ||
+      (review.comment && review.comment.toLowerCase().includes(searchTerm));
+    
+    const matchesFilter = 
+      filterValue === 'all' ||
+      (filterValue === 'verified' && review.verified) ||
+      (filterValue === 'pending' && !review.verified) ||
+      (['5','4','3'].includes(filterValue) && review.rating >= parseInt(filterValue));
+    
+    return matchesSearch && matchesFilter;
+  });
+  
+  displayReviews(filteredReviews);
+}
+
+/* ---------------- ADD HOTEL ---------------- */
+function addHotel() {
+  let name = document.getElementById("hname").value.trim();
+  let city = document.getElementById("hcity").value.trim();
+  let desc = document.getElementById("hdesc").value.trim();
+  let img = document.getElementById("himg").value.trim();
+  let price = document.getElementById("hprice").value.trim();
+  let guests = document.getElementById("hguests").value.trim();
+  let rating = document.getElementById("hrating").value.trim();
+
+  if (!name || !city || !img || !price) {
+    alert("Please enter all required hotel details!");
+    return;
+  }
+
+  let hotels = JSON.parse(localStorage.getItem("hotelList")) || [];
+
+  hotels.push({ 
+    name, 
+    city, 
+    description: desc,
+    img, 
+    price: parseFloat(price),
+    maxGuests: parseInt(guests) || 2,
+    rating: parseInt(rating) || 3
+  });
+  
+  localStorage.setItem("hotelList", JSON.stringify(hotels));
+
+  alert("Hotel Added Successfully!");
+
+  // Clear form
+  document.getElementById("hname").value = "";
+  document.getElementById("hcity").value = "";
+  document.getElementById("hdesc").value = "";
+  document.getElementById("himg").value = "";
+  document.getElementById("hprice").value = "";
+  document.getElementById("hguests").value = "";
+  document.getElementById("hrating").value = "";
+}
+
+/* ---------------- LOAD WHEN OPEN ---------------- */
+window.onload = function() {
+  loadUsers();
+  loadBookings();
+  loadReviews(); // Load reviews when page opens
+};
+</script>
+</body>
+</html>
