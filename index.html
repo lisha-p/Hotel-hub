@@ -1,0 +1,737 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>HotelHub - Smart Hotel Booking</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<header>
+  <div class="controls">
+    <span id="themeToggle" class="icon-btn">🌙</span>
+    <button id="decreaseBtn" class="font-btn">A-</button>
+    <button id="increaseBtn" class="font-btn">A+</button>
+  </div>
+  <h2>HotelHub</h2>
+  <nav>
+    <a href="index.html">Home</a>
+    <a href="about.html">About</a>
+    <a href="login.html">Login</a>
+    <a href="search.html">Search</a>
+    <a href="admin.html">Admin</a>
+  </nav>
+</header>
+
+<section class="hero">
+  <div>
+    <h1>Your Smart Hotel Booking Assistant</h1>
+    <p>Book your perfect stay with AI-powered recommendations</p>
+    <button class="btn" onclick="window.location.href='search.html'">Search Hotels</button>
+  </div>
+</section>
+
+<section class="hotels-section">
+  <h2>Popular Hotels</h2>
+  <div class="hotel-grid" id="popularHotels">
+    <!-- Popular hotels will be loaded here -->
+  </div>
+</section>
+
+<!-- Enhanced Review Section with OTP Verification -->
+<section class="review-section">
+  <h2>Submit Your Review</h2>
+  <p>To prevent fake reviews, we verify your booking via OTP</p>
+  
+  <div class="review-form">
+    <div class="form-step" id="step1">
+      <h3>Step 1: Verify Your Phone & Enter Details</h3>
+      
+      <label>Your Full Name</label>
+      <input type="text" id="customerName" placeholder="Enter your full name" required>
+      
+      <label>Your Email</label>
+      <input type="email" id="customerEmail" placeholder="Enter your email" required>
+      
+      <label>Phone Number</label>
+      <input type="tel" id="phone" placeholder="Enter your phone number" required>
+      
+      <button onclick="sendOTP()" class="btn-verify">Send OTP</button>
+    </div>
+    
+    <div class="form-step" id="step2" style="display:none;">
+      <h3>Step 2: Enter OTP</h3>
+      <label>Enter OTP</label>
+      <input type="text" id="otp" placeholder="Enter 4-digit OTP" maxlength="4">
+      <button onclick="verifyOTP()" class="btn-verify">Verify OTP</button>
+      <p id="otpStatus"></p>
+    </div>
+    
+    <div class="form-step" id="step3" style="display:none;">
+      <h3>Step 3: Write Your Review</h3>
+      <label>Select Hotel</label>
+      <select id="reviewHotel">
+        <option value="">Select a hotel</option>
+      </select>
+      
+      <label>Rating (1-5 Stars)</label>
+      <div class="star-rating">
+        <span class="star" data-rating="1">★</span>
+        <span class="star" data-rating="2">★</span>
+        <span class="star" data-rating="3">★</span>
+        <span class="star" data-rating="4">★</span>
+        <span class="star" data-rating="5">★</span>
+      </div>
+      <input type="hidden" id="rating" value="0">
+      
+      <label>Your Review</label>
+      <textarea id="comment" placeholder="Share your experience..." rows="4"></textarea>
+      
+      <button onclick="submitReview()" class="btn-submit">Submit Review</button>
+    </div>
+  </div>
+</section>
+
+<!-- Enhanced Chatbot with Avatar -->
+<div id="chatIcon">💬</div>
+
+<div id="chatBox">
+  <div id="chatHeader">
+    <img src="images/chatbot-avatar.png" alt="AI Assistant" class="chatbot-avatar">
+    <span>HotelHub Assistant</span>
+    <span class="close-chat" onclick="closeChat()">×</span>
+  </div>
+  <div id="chatMessages">
+    <div class="bot-message">
+      <img src="images/chatbot-avatar.png" alt="AI Assistant" class="chatbot-avatar">
+      <div class="message-content">
+        Hello! I'm your HotelHub assistant. I can help you find hotels, check availability, or answer any questions about bookings.
+      </div>
+    </div>
+  </div>
+  <div id="chatInputArea">
+    <input id="userInput" placeholder="Ask me anything about hotels..." />
+    <button id="voiceBtn" title="Voice Input">🎤</button>
+    <button id="sendBtn" onclick="sendMessage()">➤</button>
+  </div>
+</div>
+
+<!-- Offline Booking Indicator -->
+<div id="offlineIndicator" class="offline-banner">
+  ⚠️ You are currently offline. Bookings will be saved locally and synced when connection is restored.
+</div>
+
+<script>
+// Theme and Font Size Controls
+const themeToggle = document.getElementById("themeToggle");
+const decreaseBtn = document.getElementById("decreaseBtn");
+const increaseBtn = document.getElementById("increaseBtn");
+
+let size = localStorage.getItem("fontSize") ? parseInt(localStorage.getItem("fontSize")) : 16;
+document.body.style.fontSize = size + "px";
+
+// Initialize theme
+if (localStorage.getItem("theme") === "dark") {
+    document.body.classList.add("dark-mode");
+    themeToggle.textContent = "☀️";
+}
+
+// Theme toggle
+themeToggle.addEventListener("click", () => {
+    document.body.classList.toggle("dark-mode");
+    themeToggle.textContent = document.body.classList.contains("dark-mode") ? "☀️" : "🌙";
+    localStorage.setItem("theme", document.body.classList.contains("dark-mode") ? "dark" : "light");
+});
+
+// Font size controls
+increaseBtn.addEventListener("click", () => {
+    if (size < 40) {
+        size++;
+        document.body.style.fontSize = size + "px";
+        localStorage.setItem("fontSize", size);
+    }
+});
+
+decreaseBtn.addEventListener("click", () => {
+    if (size > 10) {
+        size--;
+        document.body.style.fontSize = size + "px";
+        localStorage.setItem("fontSize", size);
+    }
+});
+
+// Load popular hotels
+function loadPopularHotels() {
+    const hotels = [
+        {
+            name: "Ocean View Resort",
+            location: "Miami",
+            description: "Luxury beachfront resort with stunning ocean views",
+            price: 299,
+            rating: 5,
+            image: "https://images.unsplash.com/photo-1566073771259-6a8506099945?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80"
+        },
+        {
+            name: "Mountain Palace",
+            location: "Denver",
+            description: "Secluded mountain retreat with spa and fine dining",
+            price: 349,
+            rating: 4,
+            image: "https://images.unsplash.com/photo-1586375300773-8384e3e4916f?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80"
+        },
+        {
+           name:"City Lights Hotel",
+           location:"New York", 
+           description: "Modern hotel in the heart of Manhattan",
+           price:399, 
+           rating:5,
+           image:"images/city-lights.jpg"
+          
+        },
+    ];
+
+    const hotelGrid = document.getElementById("popularHotels");
+    hotelGrid.innerHTML = "";
+
+    hotels.forEach(hotel => {
+        const hotelCard = document.createElement("div");
+        hotelCard.className = "hotel-card";
+        hotelCard.innerHTML = `
+            <img src="${hotel.image}" alt="${hotel.name}">
+            <div class="hotel-card-content">
+                <h3>${hotel.name}</h3>
+                <p><strong>Location:</strong> ${hotel.location}</p>
+                <p>${hotel.description}</p>
+                <p><strong>Price:</strong> $${hotel.price}/night</p>
+                <p><strong>Rating:</strong> ${'★'.repeat(hotel.rating)}</p>
+                <button class="btn" onclick="window.location.href='booking.html'">Book Now</button>
+            </div>
+        `;
+        hotelGrid.appendChild(hotelCard);
+    });
+}
+
+// Star rating functionality
+function initializeStarRating() {
+    const stars = document.querySelectorAll('.star');
+    const ratingInput = document.getElementById('rating');
+    
+    stars.forEach(star => {
+        star.addEventListener('click', function() {
+            const rating = this.getAttribute('data-rating');
+            ratingInput.value = rating;
+            
+            // Update star display
+            stars.forEach(s => {
+                if (s.getAttribute('data-rating') <= rating) {
+                    s.classList.add('active');
+                } else {
+                    s.classList.remove('active');
+                }
+            });
+        });
+    });
+}
+
+// Load hotels for review dropdown
+function loadHotelsForReview() {
+    const hotels = [
+        "Ocean View Resort - Miami",
+        "Mountain Palace - Denver", 
+        "City Lights Hotel - New York",
+        "Lakeside Inn - Seattle",
+        "Royal Garden - Los Angeles",
+        "Beachfront Retreat - San Diego"
+    ];
+    
+    const select = document.getElementById('reviewHotel');
+    hotels.forEach(hotel => {
+        const option = document.createElement('option');
+        option.value = hotel;
+        option.textContent = hotel;
+        select.appendChild(option);
+    });
+}
+
+// OTP Verification System
+let generatedOTP = "";
+let verifiedPhone = "";
+let customerName = "";
+let customerEmail = "";
+
+// Send OTP
+function sendOTP() {
+    const nameInput = document.getElementById("customerName");
+    const emailInput = document.getElementById("customerEmail");
+    const phoneInput = document.getElementById("phone");
+    
+    customerName = nameInput.value.trim();
+    customerEmail = emailInput.value.trim();
+    const phone = phoneInput.value.trim();
+    
+    // Validation
+    if (!customerName || !customerEmail || !phone) {
+        alert("Please fill in all your details");
+        return;
+    }
+    
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(customerEmail)) {
+        alert("Please enter a valid email address");
+        return;
+    }
+    
+    // Validate phone format (simple validation)
+    const phoneRegex = /^[\+]?[1-9][\d]{0,15}$/;
+    if (!phoneRegex.test(phone.replace(/\D/g, ''))) {
+        alert("Please enter a valid phone number");
+        return;
+    }
+    
+    // Generate random 4-digit OTP
+    generatedOTP = Math.floor(1000 + Math.random() * 9000).toString();
+    verifiedPhone = phone;
+    
+    // In a real application, you would send this via SMS
+    // For demo purposes, we'll just show it
+    console.log(`OTP for ${phone}: ${generatedOTP}`);
+    alert(`Demo: OTP sent to ${phone}. In a real app, this would be sent via SMS.\nYour OTP is: ${generatedOTP}`);
+    
+    // Show next step
+    document.getElementById("step1").style.display = "none";
+    document.getElementById("step2").style.display = "block";
+}
+
+// Verify OTP
+function verifyOTP() {
+    const otpInput = document.getElementById("otp");
+    const enteredOTP = otpInput.value.trim();
+    const statusElement = document.getElementById("otpStatus");
+    
+    if (!enteredOTP) {
+        statusElement.textContent = "Please enter the OTP";
+        statusElement.className = "error-message";
+        return;
+    }
+    
+    if (enteredOTP === generatedOTP) {
+        statusElement.textContent = "✓ OTP verified successfully!";
+        statusElement.className = "success-message";
+        
+        // Store verification in localStorage
+        localStorage.setItem(`verified_${verifiedPhone}`, "true");
+        
+        // Show next step after delay
+        setTimeout(() => {
+            document.getElementById("step2").style.display = "none";
+            document.getElementById("step3").style.display = "block";
+        }, 1500);
+    } else {
+        statusElement.textContent = "✗ Invalid OTP. Please try again.";
+        statusElement.className = "error-message";
+        
+        // Clear the input
+        otpInput.value = "";
+    }
+}
+
+// Submit review
+function submitReview() {
+    const hotelSelect = document.getElementById("reviewHotel");
+    const ratingInput = document.getElementById("rating");
+    const commentInput = document.getElementById("comment");
+    
+    const hotel = hotelSelect.value;
+    const rating = ratingInput.value;
+    const comment = commentInput.value.trim();
+    
+    // Validation
+    if (!hotel) {
+        alert("Please select a hotel");
+        return;
+    }
+    
+    if (rating === "0") {
+        alert("Please provide a rating");
+        return;
+    }
+    
+    if (!comment) {
+        alert("Please write a review comment");
+        return;
+    }
+    
+    // Create review object with complete customer details
+    const review = {
+        customerName: customerName,
+        customerEmail: customerEmail,
+        customerPhone: verifiedPhone,
+        hotel: hotel,
+        rating: parseInt(rating),
+        comment: comment,
+        date: new Date().toISOString(),
+        verified: true,
+        bookingReference: "REF-" + Math.floor(1000 + Math.random() * 9000)
+    };
+    
+    // Save to localStorage (in real app, send to backend)
+    let reviews = JSON.parse(localStorage.getItem("hotelReviews")) || [];
+    reviews.push(review);
+    localStorage.setItem("hotelReviews", JSON.stringify(reviews));
+    
+    // Show success message
+    alert("Thank you! Your review has been submitted successfully.\n\nReview Details:\n" +
+          `Name: ${customerName}\n` +
+          `Hotel: ${hotel}\n` +
+          `Rating: ${rating}/5 stars\n` +
+          `Your review will appear in the admin dashboard.`);
+    
+    // Reset form
+    resetReviewForm();
+}
+
+// Reset review form
+function resetReviewForm() {
+    document.getElementById("step3").style.display = "none";
+    document.getElementById("step1").style.display = "block";
+    
+    // Clear inputs
+    document.getElementById("customerName").value = "";
+    document.getElementById("customerEmail").value = "";
+    document.getElementById("phone").value = "";
+    document.getElementById("otp").value = "";
+    document.getElementById("reviewHotel").selectedIndex = 0;
+    document.getElementById("rating").value = "0";
+    document.getElementById("comment").value = "";
+    
+    // Reset stars
+    document.querySelectorAll('.star').forEach(star => {
+        star.classList.remove('active');
+    });
+    
+    // Clear OTP status
+    document.getElementById("otpStatus").textContent = "";
+    
+    // Reset variables
+    generatedOTP = "";
+    verifiedPhone = "";
+    customerName = "";
+    customerEmail = "";
+}
+
+// Chatbot functionality
+let recognition;
+let isListening = false;
+
+// Toggle chat window
+function toggleChat() {
+    const chatBox = document.getElementById("chatBox");
+    if (chatBox.style.display === "flex") {
+        closeChat();
+    } else {
+        chatBox.style.display = "flex";
+        // Focus on input when opening
+        setTimeout(() => {
+            document.getElementById("userInput").focus();
+        }, 100);
+    }
+}
+
+// Close chat
+function closeChat() {
+    document.getElementById("chatBox").style.display = "none";
+    if (recognition && isListening) {
+        recognition.stop();
+        isListening = false;
+    }
+}
+
+// Send message
+function sendMessage() {
+    const userInput = document.getElementById("userInput");
+    const message = userInput.value.trim();
+    
+    if (message === "") return;
+    
+    // Add user message to chat
+    addMessageToChat(message, "user");
+    userInput.value = "";
+    
+    // Process and get bot response
+    setTimeout(() => {
+        const botResponse = processUserMessage(message);
+        addMessageToChat(botResponse, "bot");
+        
+        // Speak the response
+        speakMessage(botResponse);
+    }, 1000);
+}
+
+// Add message to chat
+function addMessageToChat(message, sender) {
+    const chatMessages = document.getElementById("chatMessages");
+    const messageDiv = document.createElement("div");
+    messageDiv.className = `${sender}-message`;
+    
+    if (sender === "bot") {
+        messageDiv.innerHTML = `
+            <img src="images/chatbot-avatar.png" alt="AI Assistant" class="chatbot-avatar">
+            <div class="message-content">${message}</div>
+        `;
+    } else {
+        messageDiv.innerHTML = `
+            <div class="message-content">${message}</div>
+        `;
+    }
+    
+    chatMessages.appendChild(messageDiv);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+}
+
+// Process user message and generate response
+function processUserMessage(message) {
+    const lowerMessage = message.toLowerCase();
+    
+    // Greeting responses
+    if (lowerMessage.includes("hello") || lowerMessage.includes("hi") || lowerMessage.includes("hey")) {
+        return "Hello! How can I help you with your hotel booking today?";
+    }
+    
+    // Hotel search
+    if (lowerMessage.includes("hotel") || lowerMessage.includes("find") || lowerMessage.includes("search")) {
+        if (lowerMessage.includes("miami")) {
+            return "I found several great hotels in Miami! <a href='search.html?city=Miami' style='color: #ff6600;'>Click here to view Miami hotels</a>.";
+        } else if (lowerMessage.includes("new york")) {
+            return "There are many excellent hotels in New York! <a href='search.html?city=New York' style='color: #ff6600;'>Click here to view New York hotels</a>.";
+        } else if (lowerMessage.includes("denver")) {
+            return "I can help you find hotels in Denver! <a href='search.html?city=Denver' style='color: #ff6600;'>Click here to view Denver hotels</a>.";
+        } else {
+            return "I can help you find hotels in various cities. Which city are you interested in? You can also <a href='search.html' style='color: #ff6600;'>browse all hotels here</a>.";
+        }
+    }
+    
+    // Booking questions
+    if (lowerMessage.includes("book") || lowerMessage.includes("reservation")) {
+        return "To book a hotel, simply go to the search page, select your preferred hotel, choose your dates, and proceed with the booking. <a href='search.html' style='color: #ff6600;'>Start your search here</a>.";
+    }
+    
+    // Price questions
+    if (lowerMessage.includes("price") || lowerMessage.includes("cost") || lowerMessage.includes("expensive")) {
+        return "Hotel prices vary based on location, season, and amenities. Our prices start from $99 per night. You can filter by price on our search page.";
+    }
+    
+    // Amenities
+    if (lowerMessage.includes("wifi") || lowerMessage.includes("pool") || lowerMessage.includes("breakfast")) {
+        return "Most of our hotels offer free WiFi, swimming pools, and breakfast options. You can see specific amenities for each hotel on their detail page.";
+    }
+    
+    // Payment
+    if (lowerMessage.includes("payment") || lowerMessage.includes("pay") || lowerMessage.includes("credit card")) {
+        return "We accept all major credit cards, PayPal, and Google Pay. Your payment information is securely encrypted.";
+    }
+    
+    // Cancellation
+    if (lowerMessage.includes("cancel") || lowerMessage.includes("refund")) {
+        return "Our cancellation policy varies by hotel. Most hotels offer free cancellation up to 24 hours before check-in. Please check the specific hotel's policy during booking.";
+    }
+    
+    // Reviews
+    if (lowerMessage.includes("review") || lowerMessage.includes("rating") || lowerMessage.includes("feedback")) {
+        return "You can submit a review for your hotel stay using our OTP verification system. This helps prevent fake reviews and ensures genuine feedback. <a href='#review-section' style='color: #ff6600;'>Submit your review here</a>.";
+    }
+    
+    // Default response
+    return "I'm here to help with hotel bookings! You can ask me about:<br>" +
+           "• Finding hotels in specific cities<br>" +
+           "• Booking process<br>" +
+           "• Prices and amenities<br>" +
+           "• Payment options<br>" +
+           "• Submitting reviews<br>" +
+           "Or you can <a href='search.html' style='color: #ff6600;'>browse all hotels directly</a>.";
+}
+
+// Text-to-speech
+function speakMessage(message) {
+    if ('speechSynthesis' in window) {
+        // Remove HTML tags for speech
+        const cleanMessage = message.replace(/<[^>]*>/g, '');
+        
+        const utterance = new SpeechSynthesisUtterance(cleanMessage);
+        utterance.rate = 0.9;
+        utterance.pitch = 1;
+        utterance.volume = 0.8;
+        
+        window.speechSynthesis.speak(utterance);
+    }
+}
+
+// Voice recognition setup
+function setupVoiceRecognition() {
+    if ('webkitSpeechRecognition' in window) {
+        recognition = new webkitSpeechRecognition();
+        recognition.continuous = false;
+        recognition.interimResults = false;
+        recognition.lang = 'en-US';
+        
+        recognition.onstart = function() {
+            isListening = true;
+            document.getElementById("voiceBtn").style.background = "#ff4444";
+        };
+        
+        recognition.onresult = function(event) {
+            const transcript = event.results[0][0].transcript;
+            document.getElementById("userInput").value = transcript;
+            isListening = false;
+            document.getElementById("voiceBtn").style.background = "#ff6600";
+            
+            // Auto-send after voice input
+            setTimeout(sendMessage, 500);
+        };
+        
+        recognition.onerror = function(event) {
+            console.error("Speech recognition error", event.error);
+            isListening = false;
+            document.getElementById("voiceBtn").style.background = "#ff6600";
+        };
+        
+        recognition.onend = function() {
+            isListening = false;
+            document.getElementById("voiceBtn").style.background = "#ff6600";
+        };
+        
+        document.getElementById("voiceBtn").addEventListener("click", function() {
+            if (isListening) {
+                recognition.stop();
+            } else {
+                recognition.start();
+            }
+        });
+    } else {
+        // Voice recognition not supported
+        document.getElementById("voiceBtn").style.display = "none";
+    }
+}
+
+// Offline functionality
+let offlineBookings = JSON.parse(localStorage.getItem("offlineBookings")) || [];
+let isOnline = navigator.onLine;
+
+// Update online status indicator
+function updateOnlineStatus() {
+    const indicator = document.getElementById("offlineIndicator");
+    
+    if (isOnline) {
+        indicator.style.display = "none";
+    } else {
+        indicator.style.display = "block";
+    }
+}
+
+// Handle going online
+function handleOnline() {
+    isOnline = true;
+    updateOnlineStatus();
+    
+    // Show sync message
+    showSyncMessage("Connection restored. Syncing offline bookings...");
+    
+    // Sync offline bookings
+    syncOfflineBookings();
+}
+
+// Handle going offline
+function handleOffline() {
+    isOnline = false;
+    updateOnlineStatus();
+    
+    // Show offline message
+    showSyncMessage("You are now offline. Bookings will be saved locally.");
+}
+
+// Show sync status message
+function showSyncMessage(message) {
+    // Create or update sync message element
+    let syncMessage = document.getElementById("syncMessage");
+    if (!syncMessage) {
+        syncMessage = document.createElement("div");
+        syncMessage.id = "syncMessage";
+        syncMessage.style.cssText = `
+            position: fixed;
+            top: 70px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #333;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            z-index: 1003;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+        `;
+        document.body.appendChild(syncMessage);
+    }
+    
+    syncMessage.textContent = message;
+    syncMessage.style.display = "block";
+    
+    // Hide after 3 seconds
+    setTimeout(() => {
+        syncMessage.style.display = "none";
+    }, 3000);
+}
+
+// Initialize when page loads
+document.addEventListener("DOMContentLoaded", function() {
+    loadPopularHotels();
+    initializeStarRating();
+    loadHotelsForReview();
+    setupVoiceRecognition();
+    
+    // Check online status
+    updateOnlineStatus();
+    
+    // Listen for online/offline events
+    window.addEventListener("online", handleOnline);
+    window.addEventListener("offline", handleOffline);
+    
+    // Chat icon click handler
+    document.getElementById("chatIcon").addEventListener("click", toggleChat);
+    
+    // Send button handler
+    document.getElementById("sendBtn").addEventListener("click", sendMessage);
+    
+    // Enter key handler
+    document.getElementById("userInput").addEventListener("keypress", function(e) {
+        if (e.key === "Enter") {
+            sendMessage();
+        }
+    });
+    
+    // Try to sync any pending offline bookings
+    if (isOnline) {
+        syncOfflineBookings();
+    }
+});
+
+// Sync offline bookings (simulated)
+function syncOfflineBookings() {
+    if (!isOnline || offlineBookings.length === 0) return;
+    
+    const unsyncedBookings = offlineBookings.filter(booking => !booking.synced);
+    
+    if (unsyncedBookings.length === 0) return;
+    
+    showSyncMessage(`Syncing ${unsyncedBookings.length} offline booking(s)...`);
+    
+    // Simulate sync process
+    setTimeout(() => {
+        offlineBookings.forEach(booking => booking.synced = true);
+        localStorage.setItem("offlineBookings", JSON.stringify(offlineBookings));
+        showSyncMessage("All offline bookings synced successfully!");
+    }, 2000);
+}
+</script>
+
+</body>
+</html>
