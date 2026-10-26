@@ -104,10 +104,14 @@ function submitReview() {
         verified: true
     };
     
-    // Save to localStorage (in real app, send to backend)
-    let reviews = JSON.parse(localStorage.getItem("hotelReviews")) || [];
-    reviews.push(review);
-    localStorage.setItem("hotelReviews", JSON.stringify(reviews));
+    // Save to localStorage & send real POST /api/reviews/submit to backend
+    if (window.HotelHubAPI && window.HotelHubAPI.reviews) {
+        window.HotelHubAPI.reviews.submit(review, generatedOTP);
+    } else {
+        let reviews = JSON.parse(localStorage.getItem("hotelReviews")) || [];
+        reviews.push(review);
+        localStorage.setItem("hotelReviews", JSON.stringify(reviews));
+    }
     
     // Show success message
     alert("Thank you! Your review has been submitted successfully.");

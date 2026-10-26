@@ -37,6 +37,8 @@
   .pagination button:hover { background:#e65c00; }
   .pagination button.active { background:#1e1e2f; color:#fff; }
 </style>
+<script src="js/config.js"></script>
+<script src="js/api.js"></script>
 </head>
 <body>
 
@@ -124,6 +126,20 @@ const hotels=[
 {name:"Sunset Villa", location:"San Jose", guests:3, price:210, rating:5,img:"images/sunset-villa.jpg"}
 ];
 
+// Dynamically merge hotels added via admin or backend
+try {
+  const customHotels = JSON.parse(localStorage.getItem("hotelList")) || [];
+  customHotels.forEach(ch => {
+    hotels.unshift({
+      name: ch.name,
+      location: ch.city || "City Center",
+      guests: ch.maxGuests || 2,
+      price: ch.price,
+      rating: ch.rating || 4,
+      img: ch.img || "images/luxury-haven.jpg"
+    });
+  });
+} catch(e) {}
 
 const hotelGrid=document.getElementById("hotelGrid");
 const noResults=document.getElementById("noResults");

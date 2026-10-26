@@ -17,7 +17,7 @@ public class CorsConfig implements WebMvcConfigurer {
 
     // Set ALLOWED_ORIGINS env var in Railway/Render to your Netlify URL
     // e.g. ALLOWED_ORIGINS=https://your-site.netlify.app,https://yourdomain.com
-    @Value("${ALLOWED_ORIGINS:http://localhost:3000,http://127.0.0.1:3000,http://localhost:8080,http://127.0.0.1:8080}")
+    @Value("${ALLOWED_ORIGINS:http://localhost:3000,http://127.0.0.1:3000,http://localhost:5500,http://127.0.0.1:5500,http://localhost:8080,http://127.0.0.1:8080}")
     private String allowedOriginsRaw;
 
     private List<String> getAllowedOrigins() {

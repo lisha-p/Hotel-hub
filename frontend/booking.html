@@ -211,6 +211,7 @@
   }
 </style>
 <script src="js/config.js"></script>
+<script src="js/api.js"></script>
 </head>
 <body>
 <header>
@@ -364,25 +365,14 @@ function confirmBooking() {
 
   // Check if online
   if (navigator.onLine) {
-    let bookings = JSON.parse(localStorage.getItem("hotelBookings")) || [];
-    bookings.push(bookingData);
-    localStorage.setItem("hotelBookings", JSON.stringify(bookings));
-    
-    // Also save in allBookings for admin dashboard visibility
-    let allBookings = JSON.parse(localStorage.getItem("allBookings")) || [];
-    allBookings.push({
-      hotel: hotel,
-      email: email,
-      name: name,
-      phone: phone,
-      checkin: checkin,
-      checkout: checkout,
-      guests: guests,
-      price: totalPrice,
-      status: bookingData.status,
-      timestamp: new Date().toISOString()
-    });
-    localStorage.setItem("allBookings", JSON.stringify(allBookings));
+    // Save locally and send real POST /api/bookings to backend
+    if (window.HotelHubAPI && window.HotelHubAPI.bookings) {
+      window.HotelHubAPI.bookings.create(bookingData);
+    } else {
+      let bookings = JSON.parse(localStorage.getItem("hotelBookings")) || [];
+      bookings.push(bookingData);
+      localStorage.setItem("hotelBookings", JSON.stringify(bookings));
+    }
 
     document.getElementById("successMsg").style.display = "block";
     setTimeout(() => {

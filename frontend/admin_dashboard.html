@@ -415,6 +415,7 @@ button.save-btn {
 }
 </style>
 <script src="js/config.js"></script>
+<script src="js/api.js"></script>
 </head>
 
 <body>
@@ -962,9 +963,7 @@ function addHotel() {
     return;
   }
 
-  let hotels = JSON.parse(localStorage.getItem("hotelList")) || [];
-
-  hotels.push({ 
+  const newHotel = { 
     name, 
     city, 
     description: desc,
@@ -972,10 +971,16 @@ function addHotel() {
     price: parseFloat(price),
     maxGuests: parseInt(guests) || 2,
     rating: parseInt(rating) || 3
-  });
-  
-  localStorage.setItem("hotelList", JSON.stringify(hotels));
+  };
 
+  if (window.HotelHubAPI && window.HotelHubAPI.hotels) {
+    window.HotelHubAPI.hotels.add(newHotel);
+  } else {
+    let hotels = JSON.parse(localStorage.getItem("hotelList")) || [];
+    hotels.push(newHotel);
+    localStorage.setItem("hotelList", JSON.stringify(hotels));
+  }
+  
   alert("Hotel Added Successfully!");
 
   // Clear form
