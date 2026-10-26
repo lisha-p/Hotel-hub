@@ -686,3 +686,15 @@ body.dark-mode .error-message {
   color: #ff7f7f;
   border: 1px solid #5a2d2d;
 }
+
+/* Hide Netlify Watermark Badge */
+.netlify-badge,
+[data-netlify-badge],
+#netlify-badge,
+a[href*="netlify.com"][style*="fixed"],
+div[style*="fixed"][style*="bottom"][style*="right"]:has(a[href*="netlify"]) {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
