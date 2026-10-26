@@ -39,10 +39,11 @@ public class DatabaseConfig {
         if (dbUrl != null && !dbUrl.isBlank()) {
             String rawUrl = dbUrl.trim();
 
-            // Handle Render / Cloud PostgreSQL URLs: postgres:// or postgresql://
-            if (rawUrl.startsWith("postgres://") || rawUrl.startsWith("postgresql://")) {
+            // Handle Render / Cloud PostgreSQL URLs in any format (postgres://, postgresql://, or jdbc:postgresql://)
+            if (rawUrl.contains("postgres")) {
                 try {
-                    String parseable = rawUrl.replaceFirst("^postgres(ql)?://", "http://");
+                    String cleanUrl = rawUrl.replaceFirst("^jdbc:", "");
+                    String parseable = cleanUrl.replaceFirst("^postgres(ql)?://", "http://");
                     URI uri = URI.create(parseable);
                     
                     String host = uri.getHost();
@@ -61,7 +62,7 @@ public class DatabaseConfig {
                         }
                     }
 
-                    log.info("Detected Cloud PostgreSQL. JDBC URL: {}", jdbcUrl);
+                    log.info("Successfully parsed PostgreSQL URL. Clean JDBC URL: {} for user: {}", jdbcUrl, username);
                     return DataSourceBuilder.create()
                             .driverClassName("org.postgresql.Driver")
                             .url(jdbcUrl)
@@ -69,16 +70,8 @@ public class DatabaseConfig {
                             .password(password)
                             .build();
                 } catch (Exception e) {
-                    log.error("Failed to parse PostgreSQL URI, falling back to raw: {}", e.getMessage());
+                    log.error("Failed to parse PostgreSQL URI: {}", e.getMessage());
                 }
-            } else if (rawUrl.startsWith("jdbc:postgresql:")) {
-                log.info("Using PostgreSQL JDBC URL: {}", rawUrl);
-                return DataSourceBuilder.create()
-                        .driverClassName("org.postgresql.Driver")
-                        .url(rawUrl)
-                        .username(configuredUsername)
-                        .password(configuredPassword)
-                        .build();
             } else if (rawUrl.startsWith("jdbc:mysql:")) {
                 log.info("Using MySQL JDBC URL");
                 return DataSourceBuilder.create()
