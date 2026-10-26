@@ -3,10 +3,9 @@
 // =============================================
 
 // Base URL for Spring Boot Backend.
-// In local development, defaults to Spring Boot's port 8080.
 const API_BASE_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
     ? 'http://localhost:8080'
-    : '';
+    : 'https://hotelhub-backend-b2ei.onrender.com';
 
 /**
  * Helper to build full API endpoint URLs.
