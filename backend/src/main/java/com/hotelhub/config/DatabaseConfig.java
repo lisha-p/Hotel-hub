@@ -92,7 +92,8 @@ public class DatabaseConfig {
 
         // Default fallback to configured properties
         return DataSourceBuilder.create()
-                .url(configuredUrl.isEmpty() ? "jdbc:mysql://localhost:3306/hotelhub_db" : configuredUrl)
+                .driverClassName("org.postgresql.Driver")
+                .url(configuredUrl.isEmpty() ? "jdbc:postgresql://localhost:5432/hotelhub_db" : configuredUrl)
                 .username(configuredUsername)
                 .password(configuredPassword)
                 .build();
