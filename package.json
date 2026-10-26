@@ -1,0 +1,10 @@
+{
+  "scripts": {
+    "cy:open": "cypress open",
+    "cy:run": "cypress run --spec cypress/e2e/hotelhub.cy.js",
+    "cy:api": "cypress run --spec cypress/e2e/backend-api.cy.js"
+  },
+  "devDependencies": {
+    "cypress": "^16.1.1"
+  }
+}

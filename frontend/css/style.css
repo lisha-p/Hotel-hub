@@ -316,15 +316,165 @@ input:focus, select:focus, textarea:focus {
   position: fixed;
   bottom: 90px;
   right: 25px;
-  width: 350px;
-  height: 500px;
+  width: 380px;
+  height: 560px;
   background: white;
-  border-radius: 15px;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+  border-radius: 16px;
+  box-shadow: 0 12px 35px rgba(0,0,0,0.25);
   display: none;
   flex-direction: column;
   z-index: 1001;
   overflow: hidden;
+  font-family: inherit;
+}
+
+/* AI Agent Workflow UI Styles */
+.agent-tool-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: #e0f2fe;
+  color: #0369a1;
+  border: 1px solid #7dd3fc;
+  border-radius: 6px;
+  padding: 3px 8px;
+  font-size: 11px;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+.agent-tool-badge code {
+  background: #bae6fd;
+  padding: 1px 4px;
+  border-radius: 4px;
+  font-family: monospace;
+}
+body.dark-mode .agent-tool-badge {
+  background: #082f49;
+  color: #7dd3fc;
+  border-color: #0369a1;
+}
+
+.agent-cards-container {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.agent-hotel-card {
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 10px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+}
+body.dark-mode .agent-hotel-card {
+  background: #2a2a2a;
+  border-color: #444;
+}
+
+.agent-detail-card {
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 12px;
+  margin-top: 4px;
+}
+body.dark-mode .agent-detail-card {
+  background: #2a2a2a;
+  border-color: #444;
+}
+
+.agent-warning-card {
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  color: #92400e;
+  border-radius: 8px;
+  padding: 12px;
+  margin-top: 6px;
+}
+body.dark-mode .agent-warning-card {
+  background: #451a03;
+  border-color: #78350f;
+  color: #fde68a;
+}
+
+.agent-success-card {
+  background: #f0fdf4;
+  border: 1px solid #86efac;
+  color: #166534;
+  border-radius: 8px;
+  padding: 12px;
+  margin-top: 6px;
+}
+body.dark-mode .agent-success-card {
+  background: #052e16;
+  border-color: #166534;
+  color: #86efac;
+}
+
+.agent-chip {
+  background: #f1f5f9;
+  border: 1px solid #cbd5e1;
+  color: #334155;
+  border-radius: 15px;
+  padding: 6px 10px;
+  font-size: 12px;
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.2s;
+  width: 100%;
+}
+.agent-chip:hover {
+  background: #e2e8f0;
+  border-color: #94a3b8;
+}
+body.dark-mode .agent-chip {
+  background: #333;
+  color: #e2e8f0;
+  border-color: #555;
+}
+
+.agent-action-btn {
+  background: #ff6600;
+  color: white;
+  padding: 4px 10px;
+  border-radius: 5px;
+  font-size: 12px;
+  font-weight: bold;
+  text-decoration: none;
+  display: inline-block;
+  cursor: pointer;
+}
+.agent-action-btn:hover {
+  background: #e65c00;
+}
+
+.agent-danger-btn {
+  background: #ef4444;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: bold;
+  cursor: pointer;
+}
+.agent-danger-btn:hover {
+  background: #dc2626;
+}
+
+.agent-secondary-btn {
+  background: #64748b;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  cursor: pointer;
+}
+.agent-secondary-btn:hover {
+  background: #475569;
 }
 
 body.dark-mode #chatBox {

@@ -1,0 +1,34 @@
+# ========================
+# Secrets & Environment
+# ========================
+*.env
+.env
+.env.*
+application-prod.properties
+
+# ========================
+# Build outputs
+# ========================
+target/
+*.jar
+*.war
+*.class
+node_modules/
+cypress/videos/
+cypress/screenshots/
+
+# ========================
+# IDE & OS files
+# ========================
+.vscode/
+.idea/
+*.iml
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ========================
+# Logs
+# ========================
+logs/
+*.log

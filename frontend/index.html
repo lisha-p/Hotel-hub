@@ -5,6 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>HotelHub - Smart Hotel Booking</title>
 <link rel="stylesheet" href="css/style.css">
+<script src="js/config.js"></script>
+<script src="js/ai-agent.js"></script>
+<script src="js/chatbot.js"></script>
 </head>
 <body>
 
@@ -98,15 +101,27 @@
 
 <div id="chatBox">
   <div id="chatHeader">
-    <img src="images/chatbot-avatar.png" alt="AI Assistant" class="chatbot-avatar">
-    <span>HotelHub Assistant</span>
+    <div style="display: flex; align-items: center; gap: 8px;">
+      <img src="images/chatbot-avatar.png" alt="AI Assistant" class="chatbot-avatar">
+      <div>
+        <div style="font-weight: bold; font-size: 14px;">HotelHub AI Agent</div>
+        <div style="font-size: 10px; color: #86efac; font-weight: 600;">● Tool-Calling Active</div>
+      </div>
+    </div>
     <span class="close-chat" onclick="closeChat()">×</span>
   </div>
   <div id="chatMessages">
     <div class="bot-message">
       <img src="images/chatbot-avatar.png" alt="AI Assistant" class="chatbot-avatar">
       <div class="message-content">
-        Hello! I'm your HotelHub assistant. I can help you find hotels, check availability, or answer any questions about bookings.
+        <p style="margin: 0 0 8px 0;">Hello! I am your <strong>HotelHub AI Agent</strong>. I can interpret requests, call operational tools, and execute controlled actions.</p>
+        <div style="display: flex; flex-direction: column; gap: 6px; margin-top: 6px;">
+          <button class="agent-chip" onclick="window.HotelHubAgent.ask('Find luxury hotels in Miami')">🔍 "Find luxury hotels in Miami"</button>
+          <button class="agent-chip" onclick="window.HotelHubAgent.ask('Find hotels under $200')">💰 "Find hotels under $200"</button>
+          <button class="agent-chip" onclick="window.HotelHubAgent.ask('Check my booking status')">📋 "Check my booking status"</button>
+          <button class="agent-chip" onclick="window.HotelHubAgent.ask('Calculate quote for 2 nights')">💳 "Calculate quote for 2 nights"</button>
+          <button class="agent-chip" onclick="window.HotelHubAgent.ask('What is the cancellation policy?')">ℹ️ "What is the cancellation policy?"</button>
+        </div>
       </div>
     </div>
   </div>
@@ -419,199 +434,6 @@ function resetReviewForm() {
     verifiedPhone = "";
     customerName = "";
     customerEmail = "";
-}
-
-// Chatbot functionality
-let recognition;
-let isListening = false;
-
-// Toggle chat window
-function toggleChat() {
-    const chatBox = document.getElementById("chatBox");
-    if (chatBox.style.display === "flex") {
-        closeChat();
-    } else {
-        chatBox.style.display = "flex";
-        // Focus on input when opening
-        setTimeout(() => {
-            document.getElementById("userInput").focus();
-        }, 100);
-    }
-}
-
-// Close chat
-function closeChat() {
-    document.getElementById("chatBox").style.display = "none";
-    if (recognition && isListening) {
-        recognition.stop();
-        isListening = false;
-    }
-}
-
-// Send message
-function sendMessage() {
-    const userInput = document.getElementById("userInput");
-    const message = userInput.value.trim();
-    
-    if (message === "") return;
-    
-    // Add user message to chat
-    addMessageToChat(message, "user");
-    userInput.value = "";
-    
-    // Process and get bot response
-    setTimeout(() => {
-        const botResponse = processUserMessage(message);
-        addMessageToChat(botResponse, "bot");
-        
-        // Speak the response
-        speakMessage(botResponse);
-    }, 1000);
-}
-
-// Add message to chat
-function addMessageToChat(message, sender) {
-    const chatMessages = document.getElementById("chatMessages");
-    const messageDiv = document.createElement("div");
-    messageDiv.className = `${sender}-message`;
-    
-    if (sender === "bot") {
-        messageDiv.innerHTML = `
-            <img src="images/chatbot-avatar.png" alt="AI Assistant" class="chatbot-avatar">
-            <div class="message-content">${message}</div>
-        `;
-    } else {
-        messageDiv.innerHTML = `
-            <div class="message-content">${message}</div>
-        `;
-    }
-    
-    chatMessages.appendChild(messageDiv);
-    chatMessages.scrollTop = chatMessages.scrollHeight;
-}
-
-// Process user message and generate response
-function processUserMessage(message) {
-    const lowerMessage = message.toLowerCase();
-    
-    // Greeting responses
-    if (lowerMessage.includes("hello") || lowerMessage.includes("hi") || lowerMessage.includes("hey")) {
-        return "Hello! How can I help you with your hotel booking today?";
-    }
-    
-    // Hotel search
-    if (lowerMessage.includes("hotel") || lowerMessage.includes("find") || lowerMessage.includes("search")) {
-        if (lowerMessage.includes("miami")) {
-            return "I found several great hotels in Miami! <a href='search.html?city=Miami' style='color: #ff6600;'>Click here to view Miami hotels</a>.";
-        } else if (lowerMessage.includes("new york")) {
-            return "There are many excellent hotels in New York! <a href='search.html?city=New York' style='color: #ff6600;'>Click here to view New York hotels</a>.";
-        } else if (lowerMessage.includes("denver")) {
-            return "I can help you find hotels in Denver! <a href='search.html?city=Denver' style='color: #ff6600;'>Click here to view Denver hotels</a>.";
-        } else {
-            return "I can help you find hotels in various cities. Which city are you interested in? You can also <a href='search.html' style='color: #ff6600;'>browse all hotels here</a>.";
-        }
-    }
-    
-    // Booking questions
-    if (lowerMessage.includes("book") || lowerMessage.includes("reservation")) {
-        return "To book a hotel, simply go to the search page, select your preferred hotel, choose your dates, and proceed with the booking. <a href='search.html' style='color: #ff6600;'>Start your search here</a>.";
-    }
-    
-    // Price questions
-    if (lowerMessage.includes("price") || lowerMessage.includes("cost") || lowerMessage.includes("expensive")) {
-        return "Hotel prices vary based on location, season, and amenities. Our prices start from $99 per night. You can filter by price on our search page.";
-    }
-    
-    // Amenities
-    if (lowerMessage.includes("wifi") || lowerMessage.includes("pool") || lowerMessage.includes("breakfast")) {
-        return "Most of our hotels offer free WiFi, swimming pools, and breakfast options. You can see specific amenities for each hotel on their detail page.";
-    }
-    
-    // Payment
-    if (lowerMessage.includes("payment") || lowerMessage.includes("pay") || lowerMessage.includes("credit card")) {
-        return "We accept all major credit cards, PayPal, and Google Pay. Your payment information is securely encrypted.";
-    }
-    
-    // Cancellation
-    if (lowerMessage.includes("cancel") || lowerMessage.includes("refund")) {
-        return "Our cancellation policy varies by hotel. Most hotels offer free cancellation up to 24 hours before check-in. Please check the specific hotel's policy during booking.";
-    }
-    
-    // Reviews
-    if (lowerMessage.includes("review") || lowerMessage.includes("rating") || lowerMessage.includes("feedback")) {
-        return "You can submit a review for your hotel stay using our OTP verification system. This helps prevent fake reviews and ensures genuine feedback. <a href='#review-section' style='color: #ff6600;'>Submit your review here</a>.";
-    }
-    
-    // Default response
-    return "I'm here to help with hotel bookings! You can ask me about:<br>" +
-           "• Finding hotels in specific cities<br>" +
-           "• Booking process<br>" +
-           "• Prices and amenities<br>" +
-           "• Payment options<br>" +
-           "• Submitting reviews<br>" +
-           "Or you can <a href='search.html' style='color: #ff6600;'>browse all hotels directly</a>.";
-}
-
-// Text-to-speech
-function speakMessage(message) {
-    if ('speechSynthesis' in window) {
-        // Remove HTML tags for speech
-        const cleanMessage = message.replace(/<[^>]*>/g, '');
-        
-        const utterance = new SpeechSynthesisUtterance(cleanMessage);
-        utterance.rate = 0.9;
-        utterance.pitch = 1;
-        utterance.volume = 0.8;
-        
-        window.speechSynthesis.speak(utterance);
-    }
-}
-
-// Voice recognition setup
-function setupVoiceRecognition() {
-    if ('webkitSpeechRecognition' in window) {
-        recognition = new webkitSpeechRecognition();
-        recognition.continuous = false;
-        recognition.interimResults = false;
-        recognition.lang = 'en-US';
-        
-        recognition.onstart = function() {
-            isListening = true;
-            document.getElementById("voiceBtn").style.background = "#ff4444";
-        };
-        
-        recognition.onresult = function(event) {
-            const transcript = event.results[0][0].transcript;
-            document.getElementById("userInput").value = transcript;
-            isListening = false;
-            document.getElementById("voiceBtn").style.background = "#ff6600";
-            
-            // Auto-send after voice input
-            setTimeout(sendMessage, 500);
-        };
-        
-        recognition.onerror = function(event) {
-            console.error("Speech recognition error", event.error);
-            isListening = false;
-            document.getElementById("voiceBtn").style.background = "#ff6600";
-        };
-        
-        recognition.onend = function() {
-            isListening = false;
-            document.getElementById("voiceBtn").style.background = "#ff6600";
-        };
-        
-        document.getElementById("voiceBtn").addEventListener("click", function() {
-            if (isListening) {
-                recognition.stop();
-            } else {
-                recognition.start();
-            }
-        });
-    } else {
-        // Voice recognition not supported
-        document.getElementById("voiceBtn").style.display = "none";
-    }
 }
 
 // Offline functionality

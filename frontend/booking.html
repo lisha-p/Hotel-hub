@@ -155,7 +155,62 @@
     color: #ffd351;
     border: 1px solid #665200;
   }
+
+  /* Dynamic Settings Elements */
+  .policy-box {
+    background: #e0f2fe;
+    border-left: 4px solid #0284c7;
+    color: #0369a1;
+    padding: 10px 14px;
+    border-radius: 6px;
+    margin: 15px 0;
+    font-size: 14px;
+  }
+  body.dark-mode .policy-box {
+    background: #082f49;
+    color: #bae6fd;
+    border-left-color: #38bdf8;
+  }
+
+  .price-breakdown {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 12px 16px;
+    margin-top: 15px;
+    font-size: 14px;
+  }
+  body.dark-mode .price-breakdown {
+    background: #2a2a2a;
+    border-color: #444;
+  }
+  .price-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 6px;
+  }
+  .price-row.total-row {
+    font-weight: bold;
+    font-size: 16px;
+    border-top: 1px dashed #cbd5e1;
+    padding-top: 8px;
+    margin-top: 8px;
+    color: #ff6600;
+  }
+
+  .maintenance-banner {
+    background: #fee2e2;
+    color: #991b1b;
+    border: 1px solid #f87171;
+    padding: 14px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    font-weight: bold;
+    display: none;
+    text-align: center;
+  }
 </style>
+<script src="js/config.js"></script>
 </head>
 <body>
 <header>
@@ -177,6 +232,10 @@
 <section class="booking-section">
   <h2>Booking Details</h2>
   
+  <div id="maintenanceBanner" class="maintenance-banner">
+    ⚠️ <strong>System Maintenance Active:</strong> Reservations are temporarily paused by the administrator. Please check back later.
+  </div>
+
   <div class="offline-notice" id="offlineNotice">
     ⚠️ You are currently offline. This booking will be saved locally and synced when connection is restored.
   </div>
@@ -191,10 +250,10 @@
   <input type="tel" id="phone">
 
   <label>Check-in Date</label>
-  <input type="date" id="checkin">
+  <input type="date" id="checkin" onchange="calculateBookingTotal()">
 
   <label>Check-out Date</label>
-  <input type="date" id="checkout">
+  <input type="date" id="checkout" onchange="calculateBookingTotal()">
 
   <label>Number of Guests</label>
   <select id="guests">
@@ -207,10 +266,34 @@
   <label>Selected Hotel</label>
   <input type="text" id="hotel" readonly>
 
-  <label>Total Price</label>
-  <input type="text" id="totalPrice" readonly>
+  <!-- Price Summary with Configured Rates -->
+  <div class="price-breakdown" id="priceBreakdown">
+    <div class="price-row">
+      <span id="baseRateLabel">Room Rate (1 night)</span>
+      <span id="baseRateAmount">$0.00</span>
+    </div>
+    <div class="price-row">
+      <span id="taxRateLabel">Taxes & Fees</span>
+      <span id="taxAmount">$0.00</span>
+    </div>
+    <div class="price-row">
+      <span>Service / Cleaning Fee</span>
+      <span id="serviceFeeAmount">$0.00</span>
+    </div>
+    <div class="price-row total-row">
+      <span>Estimated Total</span>
+      <span id="calculatedTotalDisplay">$0.00</span>
+    </div>
+  </div>
 
-  <button onclick="confirmBooking()">Confirm Booking</button>
+  <input type="hidden" id="totalPrice">
+
+  <!-- Policy Notice Configured by Admin -->
+  <div class="policy-box" id="cancellationPolicyNotice">
+    ℹ️ <strong>Cancellation Policy:</strong> Free cancellation up to 24 hours before check-in.
+  </div>
+
+  <button id="confirmBookingBtn" onclick="confirmBooking()">Confirm Booking</button>
 
   <p class="success" id="successMsg">🎉 Booking Successful!</p>
 </section>
@@ -242,6 +325,13 @@ document.getElementById("decreaseBtn").onclick = () => {
 
 /* ------------------------ BOOKING FUNCTION ------------------------ */
 function confirmBooking() {
+  // Check maintenance mode
+  const isMaintenance = window.HotelHubSettings.get('maintenance_mode', 'false') === 'true';
+  if (isMaintenance) {
+    alert("Bookings are temporarily disabled due to scheduled system maintenance.");
+    return;
+  }
+
   let name = document.getElementById("name").value.trim();
   let email = document.getElementById("email").value.trim();
   let phone = document.getElementById("phone").value.trim();
@@ -256,6 +346,8 @@ function confirmBooking() {
     return;
   }
 
+  const autoConfirm = window.HotelHubSettings.get('auto_confirm_bookings', 'true') === 'true';
+
   const bookingData = {
     guestName: name,
     guestEmail: email,
@@ -265,22 +357,38 @@ function confirmBooking() {
     guests: guests,
     hotel: hotel,
     totalPrice: totalPrice,
+    status: autoConfirm ? 'Confirmed' : 'Pending Approval',
+    currency: window.HotelHubSettings.get('default_currency', 'USD'),
     bookingDate: new Date().toLocaleString()
   };
 
   // Check if online
   if (navigator.onLine) {
-    // Save to online bookings
     let bookings = JSON.parse(localStorage.getItem("hotelBookings")) || [];
     bookings.push(bookingData);
     localStorage.setItem("hotelBookings", JSON.stringify(bookings));
     
+    // Also save in allBookings for admin dashboard visibility
+    let allBookings = JSON.parse(localStorage.getItem("allBookings")) || [];
+    allBookings.push({
+      hotel: hotel,
+      email: email,
+      name: name,
+      phone: phone,
+      checkin: checkin,
+      checkout: checkout,
+      guests: guests,
+      price: totalPrice,
+      status: bookingData.status,
+      timestamp: new Date().toISOString()
+    });
+    localStorage.setItem("allBookings", JSON.stringify(allBookings));
+
     document.getElementById("successMsg").style.display = "block";
     setTimeout(() => {
       window.location.href = "payment.html";
     }, 2000);
   } else {
-    // Save to offline bookings
     let offlineBookings = JSON.parse(localStorage.getItem("offlineBookings")) || [];
     offlineBookings.push({
       ...bookingData,
@@ -298,8 +406,60 @@ function confirmBooking() {
   }
 }
 
+let baseDailyPrice = 120;
+
+function calculateBookingTotal() {
+  const checkinVal = document.getElementById("checkin").value;
+  const checkoutVal = document.getElementById("checkout").value;
+  let nights = 1;
+
+  if (checkinVal && checkoutVal) {
+    const d1 = new Date(checkinVal);
+    const d2 = new Date(checkoutVal);
+    const diffTime = d2.getTime() - d1.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    if (diffDays > 0) {
+      nights = diffDays;
+    }
+  }
+
+  const symbol = window.HotelHubSettings.get('currency_symbol', '$');
+  const taxPercent = parseFloat(window.HotelHubSettings.get('tax_rate_percent', '12.0')) || 12;
+  const serviceFee = parseFloat(window.HotelHubSettings.get('service_fee', '15.0')) || 15;
+
+  const roomSubtotal = baseDailyPrice * nights;
+  const taxes = (roomSubtotal * taxPercent) / 100;
+  const total = roomSubtotal + taxes + serviceFee;
+
+  document.getElementById("baseRateLabel").textContent = `Room Rate (${nights} night${nights > 1 ? 's' : ''} × ${symbol}${baseDailyPrice})`;
+  document.getElementById("baseRateAmount").textContent = `${symbol}${roomSubtotal.toFixed(2)}`;
+  document.getElementById("taxRateLabel").textContent = `Taxes & Fees (${taxPercent}%)`;
+  document.getElementById("taxAmount").textContent = `${symbol}${taxes.toFixed(2)}`;
+  document.getElementById("serviceFeeAmount").textContent = `${symbol}${serviceFee.toFixed(2)}`;
+  document.getElementById("calculatedTotalDisplay").textContent = `${symbol}${total.toFixed(2)}`;
+  document.getElementById("totalPrice").value = `${symbol}${total.toFixed(2)}`;
+}
+
 /* ------------------------ PAGE LOAD ------------------------ */
-document.addEventListener("DOMContentLoaded", function() {
+document.addEventListener("DOMContentLoaded", async function() {
+  // Load system settings
+  await window.HotelHubSettings.load();
+
+  // Check Maintenance Mode
+  const isMaintenance = window.HotelHubSettings.get('maintenance_mode', 'false') === 'true';
+  if (isMaintenance) {
+    document.getElementById("maintenanceBanner").style.display = "block";
+    document.getElementById("confirmBookingBtn").disabled = true;
+    document.getElementById("confirmBookingBtn").style.background = "#94a3b8";
+    document.getElementById("confirmBookingBtn").style.cursor = "not-allowed";
+    document.getElementById("confirmBookingBtn").innerText = "Bookings Temporarily Unavailable";
+  }
+
+  // Set Cancellation Policy Notice
+  const cancelHours = window.HotelHubSettings.get('free_cancellation_hours', '24');
+  document.getElementById("cancellationPolicyNotice").innerHTML = 
+    `ℹ️ <strong>Cancellation Policy:</strong> Free cancellation up to <strong>${cancelHours} hours</strong> before check-in.`;
+
   // Get hotel from URL parameters
   const urlParams = new URLSearchParams(window.location.search);
   const hotel = urlParams.get('hotel');
@@ -309,28 +469,37 @@ document.addEventListener("DOMContentLoaded", function() {
     document.getElementById("hotel").value = decodeURIComponent(hotel);
   }
   
-  // Calculate total price (simple calculation)
   if (price) {
-    document.getElementById("totalPrice").value = `$${price}`;
+    baseDailyPrice = parseFloat(price) || 120;
   }
   
-  // Set minimum date to today
-  const today = new Date().toISOString().split('T')[0];
-  document.getElementById("checkin").min = today;
+  // Date boundary calculation based on max_booking_advance_days
+  const today = new Date();
+  const todayStr = today.toISOString().split('T')[0];
+  document.getElementById("checkin").min = todayStr;
   
-  // Update offline notice
+  const advanceDays = parseInt(window.HotelHubSettings.get('max_booking_advance_days', '180')) || 180;
+  const maxDate = new Date();
+  maxDate.setDate(today.getDate() + advanceDays);
+  document.getElementById("checkin").max = maxDate.toISOString().split('T')[0];
+  document.getElementById("checkout").max = maxDate.toISOString().split('T')[0];
+
+  // Set default check-in tomorrow, check-out day after
+  const tomorrow = new Date(today);
+  tomorrow.setDate(today.getDate() + 1);
+  const dayAfter = new Date(today);
+  dayAfter.setDate(today.getDate() + 2);
+  document.getElementById("checkin").value = tomorrow.toISOString().split('T')[0];
+  document.getElementById("checkout").value = dayAfter.toISOString().split('T')[0];
+
+  calculateBookingTotal();
+  
+  // Offline event listeners
   if (!navigator.onLine) {
     document.getElementById("offlineNotice").style.display = 'block';
   }
-  
-  // Listen for online/offline events
-  window.addEventListener('online', function() {
-    document.getElementById("offlineNotice").style.display = 'none';
-  });
-  
-  window.addEventListener('offline', function() {
-    document.getElementById("offlineNotice").style.display = 'block';
-  });
+  window.addEventListener('online', () => { document.getElementById("offlineNotice").style.display = 'none'; });
+  window.addEventListener('offline', () => { document.getElementById("offlineNotice").style.display = 'block'; });
 });
 </script>
 
