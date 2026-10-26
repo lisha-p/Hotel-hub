@@ -48,13 +48,6 @@
             <artifactId>spring-boot-starter-test</artifactId>
             <scope>test</scope>
         </dependency>
-        
-        <!-- Twilio for SMS OTP -->
-        <dependency>
-            <groupId>com.twilio.sdk</groupId>
-            <artifactId>twilio</artifactId>
-            <version>9.10.0</version>
-        </dependency>
     </dependencies>
 
     <build>

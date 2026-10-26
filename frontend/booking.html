@@ -287,7 +287,8 @@
     </div>
   </div>
 
-  <input type="hidden" id="totalPrice">
+  <label>Total Price</label>
+  <input type="text" id="totalPrice" readonly>
 
   <!-- Policy Notice Configured by Admin -->
   <div class="policy-box" id="cancellationPolicyNotice">
@@ -401,21 +402,29 @@ let baseDailyPrice = 120;
 function calculateBookingTotal() {
   const checkinVal = document.getElementById("checkin").value;
   const checkoutVal = document.getElementById("checkout").value;
-  let nights = 1;
+  const symbol = window.HotelHubSettings ? window.HotelHubSettings.get('currency_symbol', '$') : '$';
+  const taxPercent = parseFloat(window.HotelHubSettings ? window.HotelHubSettings.get('tax_rate_percent', '12.0') : '12.0') || 12;
+  const serviceFee = parseFloat(window.HotelHubSettings ? window.HotelHubSettings.get('service_fee', '15.0') : '15.0') || 15;
 
-  if (checkinVal && checkoutVal) {
-    const d1 = new Date(checkinVal);
-    const d2 = new Date(checkoutVal);
-    const diffTime = d2.getTime() - d1.getTime();
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    if (diffDays > 0) {
-      nights = diffDays;
-    }
+  if (!checkinVal || !checkoutVal) {
+    document.getElementById("baseRateLabel").textContent = `Room Rate (per night)`;
+    document.getElementById("baseRateAmount").textContent = `${symbol}${baseDailyPrice}`;
+    document.getElementById("taxRateLabel").textContent = `Taxes & Fees (${taxPercent}%)`;
+    document.getElementById("taxAmount").textContent = `${symbol}0.00`;
+    document.getElementById("serviceFeeAmount").textContent = `${symbol}0.00`;
+    document.getElementById("calculatedTotalDisplay").textContent = `${symbol}${baseDailyPrice}`;
+    document.getElementById("totalPrice").value = `${symbol}${baseDailyPrice}`;
+    return;
   }
 
-  const symbol = window.HotelHubSettings.get('currency_symbol', '$');
-  const taxPercent = parseFloat(window.HotelHubSettings.get('tax_rate_percent', '12.0')) || 12;
-  const serviceFee = parseFloat(window.HotelHubSettings.get('service_fee', '15.0')) || 15;
+  let nights = 1;
+  const d1 = new Date(checkinVal);
+  const d2 = new Date(checkoutVal);
+  const diffTime = d2.getTime() - d1.getTime();
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  if (diffDays > 0) {
+    nights = diffDays;
+  }
 
   const roomSubtotal = baseDailyPrice * nights;
   const taxes = (roomSubtotal * taxPercent) / 100;
@@ -432,25 +441,7 @@ function calculateBookingTotal() {
 
 /* ------------------------ PAGE LOAD ------------------------ */
 document.addEventListener("DOMContentLoaded", async function() {
-  // Load system settings
-  await window.HotelHubSettings.load();
-
-  // Check Maintenance Mode
-  const isMaintenance = window.HotelHubSettings.get('maintenance_mode', 'false') === 'true';
-  if (isMaintenance) {
-    document.getElementById("maintenanceBanner").style.display = "block";
-    document.getElementById("confirmBookingBtn").disabled = true;
-    document.getElementById("confirmBookingBtn").style.background = "#94a3b8";
-    document.getElementById("confirmBookingBtn").style.cursor = "not-allowed";
-    document.getElementById("confirmBookingBtn").innerText = "Bookings Temporarily Unavailable";
-  }
-
-  // Set Cancellation Policy Notice
-  const cancelHours = window.HotelHubSettings.get('free_cancellation_hours', '24');
-  document.getElementById("cancellationPolicyNotice").innerHTML = 
-    `ℹ️ <strong>Cancellation Policy:</strong> Free cancellation up to <strong>${cancelHours} hours</strong> before check-in.`;
-
-  // Get hotel from URL parameters
+  // 1. Get hotel and price immediately and synchronously from URL
   const urlParams = new URLSearchParams(window.location.search);
   const hotel = urlParams.get('hotel');
   const price = urlParams.get('price');
@@ -461,28 +452,36 @@ document.addEventListener("DOMContentLoaded", async function() {
   
   if (price) {
     baseDailyPrice = parseFloat(price) || 120;
+    document.getElementById("totalPrice").value = `$${price}`;
   }
-  
-  // Date boundary calculation based on max_booking_advance_days
+
+  // 2. Set min dates
   const today = new Date();
   const todayStr = today.toISOString().split('T')[0];
   document.getElementById("checkin").min = todayStr;
-  
-  const advanceDays = parseInt(window.HotelHubSettings.get('max_booking_advance_days', '180')) || 180;
-  const maxDate = new Date();
-  maxDate.setDate(today.getDate() + advanceDays);
-  document.getElementById("checkin").max = maxDate.toISOString().split('T')[0];
-  document.getElementById("checkout").max = maxDate.toISOString().split('T')[0];
 
-  // Set default check-in tomorrow, check-out day after
-  const tomorrow = new Date(today);
-  tomorrow.setDate(today.getDate() + 1);
-  const dayAfter = new Date(today);
-  dayAfter.setDate(today.getDate() + 2);
-  document.getElementById("checkin").value = tomorrow.toISOString().split('T')[0];
-  document.getElementById("checkout").value = dayAfter.toISOString().split('T')[0];
+  // 3. Load system settings in background
+  window.HotelHubSettings.load().then(() => {
+    const isMaintenance = window.HotelHubSettings.get('maintenance_mode', 'false') === 'true';
+    if (isMaintenance) {
+      document.getElementById("maintenanceBanner").style.display = "block";
+      document.getElementById("confirmBookingBtn").disabled = true;
+      document.getElementById("confirmBookingBtn").style.background = "#94a3b8";
+      document.getElementById("confirmBookingBtn").style.cursor = "not-allowed";
+      document.getElementById("confirmBookingBtn").innerText = "Bookings Temporarily Unavailable";
+    }
 
-  calculateBookingTotal();
+    const cancelHours = window.HotelHubSettings.get('free_cancellation_hours', '24');
+    document.getElementById("cancellationPolicyNotice").innerHTML = 
+      `ℹ️ <strong>Cancellation Policy:</strong> Free cancellation up to <strong>${cancelHours} hours</strong> before check-in.`;
+
+    const advanceDays = parseInt(window.HotelHubSettings.get('max_booking_advance_days', '180')) || 180;
+    const maxDate = new Date();
+    maxDate.setDate(today.getDate() + advanceDays);
+    document.getElementById("checkin").max = maxDate.toISOString().split('T')[0];
+    document.getElementById("checkout").max = maxDate.toISOString().split('T')[0];
+    calculateBookingTotal();
+  });
   
   // Offline event listeners
   if (!navigator.onLine) {

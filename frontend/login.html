@@ -194,6 +194,8 @@
     .login-card { width: 90%; padding: 35px 25px; }
   }
 </style>
+<script src="js/config.js"></script>
+<script src="js/api.js"></script>
 </head>
 <body>
 
@@ -251,7 +253,7 @@
   dec.addEventListener("click", () => { if(size>10){size--;document.body.style.fontSize=size+"px";localStorage.setItem("fontSize", size);} });
 
   // LOGIN FUNCTION
-  function login() {
+  async function login() {
     const email = document.getElementById("email").value.trim();
     const password = document.getElementById("password").value.trim();
 
@@ -260,24 +262,31 @@
       return;
     }
 
-    // Demo credentials
+    // Demo credentials check (instant for Cypress and local testing)
     if(email === "user@example.com" && password === "1234") {
-      // Store user session
-      const userSession = {
-        email: email,
-        loginTime: new Date().toLocaleString()
-      };
-      
-      // Save to users list
       let users = JSON.parse(localStorage.getItem("hotelUsers")) || [];
-      users.push(userSession);
+      users.push({ email: email, loginTime: new Date().toLocaleString() });
       localStorage.setItem("hotelUsers", JSON.stringify(users));
       
       alert("Login Successful!");
       window.location.href = "search.html";
-    } else {
-      alert("Invalid credentials!\nTry email: user@example.com / password: 1234");
+      return;
     }
+
+    if (window.HotelHubAPI && window.HotelHubAPI.auth) {
+      const res = await window.HotelHubAPI.auth.login(email, password);
+      if (res.success) {
+        let users = JSON.parse(localStorage.getItem("hotelUsers")) || [];
+        users.push({ email: email, loginTime: new Date().toLocaleString() });
+        localStorage.setItem("hotelUsers", JSON.stringify(users));
+
+        alert("Login Successful!");
+        window.location.href = "search.html";
+        return;
+      }
+    }
+
+    alert("Invalid credentials!\nTry email: user@example.com / password: 1234");
   }
 </script>
 

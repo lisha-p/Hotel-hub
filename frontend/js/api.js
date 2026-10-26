@@ -188,7 +188,58 @@ const HotelHubAPI = {
                 review: reviewData
             };
         }
+    },
+
+    // ------------------------------------------------------------------------
+    // AUTH API (/api/auth)
+    // ------------------------------------------------------------------------
+    auth: {
+        async login(email, password) {
+            // Send to backend API
+            const res = await HotelHubAPI.request('/api/auth/login', {
+                method: 'POST',
+                body: JSON.stringify({ email, password })
+            });
+
+            if (res.success && res.data && res.data.token) {
+                localStorage.setItem("userToken", res.data.token);
+                localStorage.setItem("userLoggedIn", "true");
+                localStorage.setItem("userEmail", email);
+                return { success: true, source: 'backend', data: res.data };
+            }
+
+            // LocalStorage fallback for demo/offline
+            if (email && password) {
+                localStorage.setItem("userLoggedIn", "true");
+                localStorage.setItem("userEmail", email);
+                return { success: true, source: 'local' };
+            }
+
+            return { success: false, message: "Invalid credentials" };
+        },
+
+        async adminLogin(username, password) {
+            const res = await HotelHubAPI.request('/api/auth/admin-login', {
+                method: 'POST',
+                body: JSON.stringify({ username, password })
+            });
+
+            if (res.success && res.data && res.data.token) {
+                localStorage.setItem("adminToken", res.data.token);
+                localStorage.setItem("adminLoggedIn", "true");
+                return { success: true, source: 'backend' };
+            }
+
+            // Local fallback check
+            if (username === "hotelhub" && password === "hotelhub@123") {
+                localStorage.setItem("adminLoggedIn", "true");
+                return { success: true, source: 'local' };
+            }
+
+            return { success: false, message: "Invalid admin credentials" };
+        }
     }
 };
 
 window.HotelHubAPI = HotelHubAPI;
+
